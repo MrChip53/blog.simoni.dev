@@ -75,6 +75,10 @@ func Index(ctx *gin.Context) {
 	})
 }
 
+func Health(ctx *gin.Context) {
+	ctx.Status(http.StatusOK)
+}
+
 func ConfigRuntime() {
 	nuCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(nuCPU)
@@ -112,6 +116,7 @@ func main() {
 	router.HTMLRender = renderer("./templates")
 
 	router.GET("/", Index)
+	router.GET("/hp", Health)
 
 	if err = router.Run(":8080"); err != nil {
 		log.Fatal("failed to run router:", err)
