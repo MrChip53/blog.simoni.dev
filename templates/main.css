@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+    @apply text-white;
+}
+
+body {
+    @apply bg-neutral-800;
+}

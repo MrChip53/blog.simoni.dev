@@ -1,71 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <title>Home</title>
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-</head>
-
-<body class="bg-neutral-900 text-white">
-<div class="sticky top-0 flex justify-between w-full bg-neutral-800 px-4">
-    <div class="flex h-100 items-center">
-        <span class="text-2xl">blog.simoni.dev</span>
-    </div>
-    <!-- Use <nav> element here -->
-    <div>
-        <ul class="flex list-none items-stretch">
-            <li
-                    class="flex pt-1 mr-6 hover:text-purple-600 hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
-                <a class="flex py-4 items-center static text-2xl" href="index.html">Home</a>
-            </li>
-            <li
-                    class="flex pt-1 mr-6 hover:text-purple-600 hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
-                <a class="flex py-4 items-center static text-2xl" href="https://simoni.dev/">Portfolio</a>
-            </li>
-            <li
-                    class="hidden flex pt-1 mr-6 hover:text-purple-600 hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
-                <a class="flex py-4 items-center static text-2xl" href="login.html">Log in</a>
-            </li>
-        </ul>
-    </div>
-</div>
-
-<div class="flex flex-col gap-10 w-full items-center my-10">
-    <section class="w-1/2">
-        <h1 class="text-4xl mb-4 hover:underline">
-            <a href="/post/08-14-2023-example-post">Example Post</a>
-        </h1>
-        <h2 class="mb-6 text-gray-400 text-xl">
-            @mrchip53
-        </h2>
-        <div class="mb-4 text-2xl">
-            Go, often referred to as Golang, is an open-source programming language developed by Google. Designed
-            for efficiency, simplicity, and concurrency, Go combines the speed of a compiled language with the ease
-            of a dynamically typed one. It emphasizes clear syntax, automatic memory management, and a robust
-            standard library. Golang excels in building scalable and high-performance software, making it a popular
-            choice for web services, network applications, and distributed systems. Its built-in support for
-            concurrent programming through goroutines and channels simplifies parallelism. With a strong focus on
-            simplicity and efficiency, Golang has gained traction in modern software development.
-        </div>
-        <div class="flex gap-4 text-xl">
-                <span class="text-gray-400">
-                    August 14th, 2023 3:52 PM
-                </span>
-            <div class="flex gap-2">
-                <a class="text-purple-600 hover:underline hover:text-purple-400 transition" href="/tag/lorem">
-                    #programming
-                </a>
-                <a class="text-purple-600 hover:underline hover:text-purple-400 transition" href="/tag/ipsum">
-                    #golang
-                </a>
+{{ define "content" }}
+    {{ range .posts }}
+        <section class="w-1/2">
+            <h1 class="text-4xl mb-4 hover:underline">
+                <a href="/post/08-14-2023-example-post">{{ .Title }}</a>
+            </h1>
+            <h2 class="mb-6 text-gray-400 text-xl">
+                @{{ .Author }}
+            </h2>
+            <div class="mb-4 text-2xl">
+                Go, often referred to as Golang, is an open-source programming language developed by Google. Designed
+                for efficiency, simplicity, and concurrency, Go combines the speed of a compiled language with the ease
+                of a dynamically typed one. It emphasizes clear syntax, automatic memory management, and a robust
+                standard library. Golang excels in building scalable and high-performance software, making it a popular
+                choice for web services, network applications, and distributed systems. Its built-in support for
+                concurrent programming through goroutines and channels simplifies parallelism. With a strong focus on
+                simplicity and efficiency, Golang has gained traction in modern software development.
             </div>
+            <div class="flex gap-4 text-xl">
+                        <span class="text-gray-400">
+                            August 14th, 2023 3:52 PM
+                        </span>
+                <div class="flex gap-2">
+                    {{ range .Tags }}
+                    <a class="text-purple-600 hover:underline hover:text-purple-400 transition" href="/tag/{{ .Name }}">
+                        #{{ .Name }}
+                    </a>
+                    {{ end }}
+                </div>
+            </div>
+        </section>
+    {{ end }}
+    {{ if .noPosts }}
+        <div class="text-4xl">
+            No posts yet!
         </div>
-    </section>
-</div>
-</body>
-
-</html>
+    {{ end }}
+{{ end }}

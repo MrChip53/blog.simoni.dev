@@ -1,10 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <title>Title</title>
+  <title>Home</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 </head>
-<body>
 
+<body class="bg-neutral-900 text-white">
+<div class="sticky top-0 flex justify-between w-full bg-neutral-800 px-4">
+  <div class="flex h-100 items-center">
+    <span class="text-2xl">blog.simoni.dev</span>
+  </div>
+  <!-- Use <nav> element here -->
+  <div>
+    <ul class="flex list-none items-stretch">
+      <li
+              class="flex pt-1 mr-6 hover:text-purple-600 hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
+        <a class="flex py-4 items-center static text-2xl" href="index.html">Home</a>
+      </li>
+      <li
+              class="flex pt-1 mr-6 hover:text-purple-600 hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
+        <a class="flex py-4 items-center static text-2xl" href="https://simoni.dev/">Portfolio</a>
+      </li>
+      <li
+              class="hidden flex pt-1 mr-6 hover:text-purple-600 hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
+        <a class="flex py-4 items-center static text-2xl" href="login.html">Log in</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="flex flex-col gap-10 w-full items-center my-10">
+  {{ template "content" . }}
+</div>
 </body>
+
 </html>
