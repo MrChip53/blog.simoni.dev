@@ -1,6 +1,8 @@
 package main
 
 import (
+	"blog.simoni.dev/models"
+	"blog.simoni.dev/server"
 	"fmt"
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
@@ -10,30 +12,13 @@ import (
 	"gorm.io/gorm"
 	"html/template"
 	"log"
-	"net/http"
 	"os"
 	"path"
 	"runtime"
 	"time"
 )
 
-var db *gorm.DB
-
-type BlogPost struct {
-	gorm.Model
-	Title   string
-	Author  string
-	Slug    string `gorm:"type:varchar(100);unique_index"`
-	Content string `gorm:"type:text"`
-	Tags    []Tag  `gorm:"many2many:blog_post_tags;"`
-}
-
-type Tag struct {
-	gorm.Model
-	Name string
-}
-
-func getSlug(post BlogPost) string {
+func getSlug(post models.BlogPost) string {
 	return fmt.Sprintf("/post/%02d/%02d/%d/%s", post.CreatedAt.Month(), post.CreatedAt.Day(), post.CreatedAt.Year(), post.Slug)
 }
 
@@ -83,87 +68,6 @@ func renderer(templatePath string) multitemplate.Renderer {
 	return r
 }
 
-func Index(ctx *gin.Context) {
-	var posts []BlogPost
-	if err := db.Preload("Tags").Order("created_at DESC").Limit(10).Find(&posts).Error; err != nil {
-		log.Println("Index failed to get posts:", err)
-		ctx.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	ctx.HTML(200, "index", gin.H{
-		"title":   "mrchip53's blog",
-		"posts":   posts,
-		"noPosts": len(posts) == 0,
-	})
-}
-
-func Handle404(ctx *gin.Context) {
-	ctx.HTML(404, "notFound", gin.H{
-		"title": "Content Not Found",
-	})
-}
-
-func HandlePost(ctx *gin.Context) {
-	month := ctx.Param("month")
-	day := ctx.Param("day")
-	year := ctx.Param("year")
-	slug := ctx.Param("slug")
-
-	var post BlogPost
-	if err := db.Preload("Tags").Where("day(created_at) = ? AND month(created_at) = ? AND year(created_at) = ? AND slug = ?", day, month, year, slug).First(&post).Error; err != nil {
-		log.Println("Index failed to get posts:", err)
-		ctx.HTML(404, "notFound", gin.H{
-			"title": "Content Not Found",
-		})
-		return
-	}
-
-	ctx.HTML(200, "post", gin.H{
-		"title": post.Title,
-		"post":  post,
-	})
-}
-
-func HandleTag(ctx *gin.Context) {
-	tag := ctx.Param("tag")
-
-	var postIds []uint
-	// Raw sql query to pull post ids
-	if err := db.Raw("SELECT blog_post_id FROM blog_post_tags WHERE tag_id = (SELECT id FROM tags WHERE name = ?)", tag).Scan(&postIds).Error; err != nil {
-		log.Println("Tag failed to get post ids:", err)
-		ctx.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	var posts []BlogPost
-	if err := db.Preload("Tags").Where("id IN ?", postIds).Find(&posts).Error; err != nil {
-		log.Println("Tag failed to get posts:", err)
-		ctx.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	//for i, post := range posts {
-	//	var tags []Tag
-	//	if err := db.Model(&post).Association("Tags").Find(&tags); err != nil {
-	//		log.Println("Tag failed to get tags:", err)
-	//		ctx.AbortWithStatus(http.StatusInternalServerError)
-	//		return
-	//	}
-	//	posts[i].Tags = tags
-	//}
-
-	ctx.HTML(200, "index", gin.H{
-		"title":   fmt.Sprintf("Posts tagged with %s", tag),
-		"posts":   posts,
-		"noPosts": len(posts) == 0,
-	})
-}
-
-func Health(ctx *gin.Context) {
-	ctx.Status(http.StatusOK)
-}
-
 func ConfigRuntime() {
 	nuCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(nuCPU)
@@ -178,7 +82,7 @@ func main() {
 
 	ConfigRuntime()
 
-	db, err = gorm.Open(
+	db, err := gorm.Open(
 		mysql.Open(os.Getenv("DSN")),
 		&gorm.Config{
 			DisableForeignKeyConstraintWhenMigrating: true,
@@ -187,10 +91,12 @@ func main() {
 		log.Fatal("failed to open db connection", err)
 	}
 
-	err = db.AutoMigrate(&BlogPost{}, &Tag{})
+	err = db.AutoMigrate(&models.BlogPost{}, &models.Tag{})
 	if err != nil {
 		log.Fatal("Failed to migrate db", err)
 	}
+
+	controller := server.NewController(db)
 
 	//db.Create(&BlogPost{
 	//	Title:   "Under Development",
@@ -219,23 +125,14 @@ func main() {
 	router.Static("/css", "css")
 	router.HTMLRender = renderer("./templates")
 
-	router.NoRoute(Handle404)
+	router.NoRoute(controller.HandleNotFound)
 
-	router.GET("/", Index)
-	router.GET("/post/:month/:day/:year/:slug", HandlePost)
-	router.GET("/tag/:tag", HandleTag)
-	router.GET("/hp", Health)
+	router.GET("/", controller.HandleIndex)
+	router.GET("/post/:month/:day/:year/:slug", controller.HandlePost)
+	router.GET("/tag/:tag", controller.HandleTag)
+	router.GET("/hp", controller.HandleHealth)
 
 	if err = router.Run(":8080"); err != nil {
 		log.Fatal("failed to run router:", err)
 	}
-
-	//fs := http.FileServer(http.Dir("./public"))
-	//http.Handle("/", fs)
-	//
-	//log.Print("Listening on :3000...")
-	//err = http.ListenAndServe(":3000", nil)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
 }
