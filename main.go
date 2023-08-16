@@ -219,7 +219,7 @@ func main() {
 	router.Static("/css", "css")
 	router.HTMLRender = renderer("./templates")
 
-	router.NoRoute()
+	router.NoRoute(Handle404)
 
 	router.GET("/", Index)
 	router.GET("/post/:month/:day/:year/:slug", HandlePost)
