@@ -2,23 +2,17 @@
     {{ range .posts }}
         <section class="w-1/2">
             <h1 class="text-4xl mb-4 hover:underline">
-                <a href="/post/08-14-2023-example-post">{{ .Title }}</a>
+                <a href="{{ . | getSlug }}">{{ .Title }}</a>
             </h1>
             <h2 class="mb-6 text-gray-400 text-xl">
                 @{{ .Author }}
             </h2>
             <div class="mb-4 text-2xl">
-                Go, often referred to as Golang, is an open-source programming language developed by Google. Designed
-                for efficiency, simplicity, and concurrency, Go combines the speed of a compiled language with the ease
-                of a dynamically typed one. It emphasizes clear syntax, automatic memory management, and a robust
-                standard library. Golang excels in building scalable and high-performance software, making it a popular
-                choice for web services, network applications, and distributed systems. Its built-in support for
-                concurrent programming through goroutines and channels simplifies parallelism. With a strong focus on
-                simplicity and efficiency, Golang has gained traction in modern software development.
+                {{ truncateString .Content 400 }}
             </div>
             <div class="flex gap-4 text-xl">
                         <span class="text-gray-400">
-                            August 14th, 2023 3:52 PM
+                            {{ .CreatedAt | formatAsDateTime }}
                         </span>
                 <div class="flex gap-2">
                     {{ range .Tags }}

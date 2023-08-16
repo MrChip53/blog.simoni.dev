@@ -1,0 +1,25 @@
+{{ define "content" }}
+    <section class="w-1/2">
+        <h1 class="text-4xl mb-4 hover:underline">
+            {{ .post.Title }}
+        </h1>
+        <h2 class="mb-6 text-gray-400 text-xl">
+            @{{ .post.Author }}
+        </h2>
+        <div class="mb-4 text-2xl">
+            {{ .post.Content }}
+        </div>
+        <div class="flex gap-4 text-xl">
+                            <span class="text-gray-400">
+                                {{ .post.CreatedAt | formatAsDateTime }}
+                            </span>
+            <div class="flex gap-2">
+                {{ range .post.Tags }}
+                <a class="text-purple-600 hover:underline hover:text-purple-400 transition" href="/tag/{{ .Name }}">
+                    #{{ .Name }}
+                </a>
+                {{ end }}
+            </div>
+        </div>
+    </section>
+{{ end }}
