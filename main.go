@@ -77,6 +77,9 @@ func renderer(templatePath string) multitemplate.Renderer {
 	r.AddFromFilesFuncs("index", funcMap, basePath, path.Join(templatePath, "index.html"))
 	r.AddFromFilesFuncs("post", funcMap, basePath, path.Join(templatePath, "post.html"))
 
+	// Error pages
+	r.AddFromFilesFuncs("notFound", funcMap, basePath, path.Join(templatePath, "errors/404.html"))
+
 	return r
 }
 
@@ -89,8 +92,15 @@ func Index(ctx *gin.Context) {
 	}
 
 	ctx.HTML(200, "index", gin.H{
+		"title":   "mrchip53's blog",
 		"posts":   posts,
 		"noPosts": len(posts) == 0,
+	})
+}
+
+func Handle404(ctx *gin.Context) {
+	ctx.HTML(404, "notFound", gin.H{
+		"title": "Content Not Found",
 	})
 }
 
@@ -103,38 +113,48 @@ func HandlePost(ctx *gin.Context) {
 	var post BlogPost
 	if err := db.Preload("Tags").Where("day(created_at) = ? AND month(created_at) = ? AND year(created_at) = ? AND slug = ?", day, month, year, slug).First(&post).Error; err != nil {
 		log.Println("Index failed to get posts:", err)
-		ctx.AbortWithStatus(http.StatusInternalServerError)
+		ctx.HTML(404, "notFound", gin.H{
+			"title": "Content Not Found",
+		})
 		return
 	}
 
 	ctx.HTML(200, "post", gin.H{
-		"post": post,
+		"title": post.Title,
+		"post":  post,
 	})
 }
 
 func HandleTag(ctx *gin.Context) {
 	tag := ctx.Param("tag")
 
-	var posts []BlogPost
-	if err := db.Preload("Tags", func(db *gorm.DB) *gorm.DB {
-		return db.Where("name LIKE ?", tag)
-	}).Order("created_at DESC").Limit(10).Find(&posts).Error; err != nil {
-		log.Println("Index failed to get posts:", err)
+	var postIds []uint
+	// Raw sql query to pull post ids
+	if err := db.Raw("SELECT blog_post_id FROM blog_post_tags WHERE tag_id = (SELECT id FROM tags WHERE name = ?)", tag).Scan(&postIds).Error; err != nil {
+		log.Println("Tag failed to get post ids:", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	for i, post := range posts {
-		var tags []Tag
-		if err := db.Model(&post).Association("Tags").Find(&tags); err != nil {
-			log.Println("Index failed to get tags:", err)
-			ctx.AbortWithStatus(http.StatusInternalServerError)
-			return
-		}
-		posts[i].Tags = tags
+	var posts []BlogPost
+	if err := db.Preload("Tags").Where("id IN ?", postIds).Find(&posts).Error; err != nil {
+		log.Println("Tag failed to get posts:", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
 	}
 
+	//for i, post := range posts {
+	//	var tags []Tag
+	//	if err := db.Model(&post).Association("Tags").Find(&tags); err != nil {
+	//		log.Println("Tag failed to get tags:", err)
+	//		ctx.AbortWithStatus(http.StatusInternalServerError)
+	//		return
+	//	}
+	//	posts[i].Tags = tags
+	//}
+
 	ctx.HTML(200, "index", gin.H{
+		"title":   fmt.Sprintf("Posts tagged with %s", tag),
 		"posts":   posts,
 		"noPosts": len(posts) == 0,
 	})
@@ -198,6 +218,8 @@ func main() {
 
 	router.Static("/css", "css")
 	router.HTMLRender = renderer("./templates")
+
+	router.NoRoute()
 
 	router.GET("/", Index)
 	router.GET("/post/:month/:day/:year/:slug", HandlePost)
