@@ -6,6 +6,13 @@ import (
 	"log"
 )
 
+func isHXRequest() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		ctx.Set("isHXRequest", ctx.Request.Header.Get("HX-Request") == "true")
+		ctx.Next()
+	}
+}
+
 func NewServer(db *gorm.DB) (*gin.Engine, error) {
 	router := NewRouter(db)
 
@@ -18,7 +25,10 @@ func NewServer(db *gorm.DB) (*gin.Engine, error) {
 		return nil, err
 	}
 
+	engine.Use(isHXRequest())
+
 	engine.Static("/css", "css")
+	engine.Static("/js", "js")
 	engine.HTMLRender = createRenderer("./templates")
 
 	engine.NoRoute(router.HandleNotFound)

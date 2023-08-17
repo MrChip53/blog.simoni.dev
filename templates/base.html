@@ -1,3 +1,4 @@
+{{ if not .isHXRequest }}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -8,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <script src="/js/htmx.min.js"></script>
 </head>
 
 <body class="bg-neutral-900 text-white">
@@ -19,6 +21,7 @@
   <div>
     <ul class="flex list-none items-stretch">
       <li
+              hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms"
               class="flex pt-1 mr-6 hover:text-purple-600 hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
         <a class="flex py-4 items-center static text-2xl" href="/">Home</a>
       </li>
@@ -34,9 +37,14 @@
   </div>
 </div>
 
-<div class="flex flex-col gap-10 w-full items-center my-10">
+<div id="main-container" class="flex flex-col gap-10 w-full items-center my-10" hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms">
+  {{ end }}
+
   {{ template "content" . }}
+
+  {{ if not .isHXRequest }}
 </div>
 </body>
 
 </html>
+{{ end }}

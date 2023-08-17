@@ -47,11 +47,11 @@ func (r *Router) HandleIndex(ctx *gin.Context) {
 		return
 	}
 
-	ctx.HTML(200, "index", gin.H{
+	ctx.HTML(200, "index", addHXRequest(ctx, gin.H{
 		"title":   "mrchip53's blog",
 		"posts":   posts,
 		"noPosts": len(posts) == 0,
-	})
+	}))
 }
 
 func (r *Router) HandlePost(ctx *gin.Context) {
@@ -63,23 +63,26 @@ func (r *Router) HandlePost(ctx *gin.Context) {
 	var post models.BlogPost
 	if err := r.Db.Preload("Tags").Where("day(created_at) = ? AND month(created_at) = ? AND year(created_at) = ? AND slug = ?", day, month, year, slug).First(&post).Error; err != nil {
 		log.Println("Index failed to get posts:", err)
-		ctx.HTML(404, "notFound", gin.H{
+		ctx.HTML(404, "notFound", addHXRequest(ctx, gin.H{
 			"title": "Content Not Found",
-		})
+		}))
 		return
 	}
 
-	ctx.HTML(200, "post", gin.H{
+	ctx.HTML(200, "post", addHXRequest(ctx, gin.H{
 		"title": post.Title,
 		"post":  post,
-	})
+	}))
 }
 
 func (r *Router) HandleTag(ctx *gin.Context) {
 	tag := ctx.Param("tag")
 
 	var postIds []uint
-	if err := r.Db.Raw("SELECT blog_post_id FROM blog_post_tags WHERE tag_id = (SELECT id FROM tags WHERE name = ?)", tag).Scan(&postIds).Error; err != nil {
+	if err := r.Db.Raw(
+		"SELECT blog_post_id FROM blog_post_tags WHERE tag_id = (SELECT id FROM tags WHERE name = ?)",
+		tag,
+	).Scan(&postIds).Error; err != nil {
 		log.Println("Tag failed to get post ids:", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
@@ -92,27 +95,33 @@ func (r *Router) HandleTag(ctx *gin.Context) {
 		return
 	}
 
-	ctx.HTML(200, "index", gin.H{
+	ctx.HTML(200, "index", addHXRequest(ctx, gin.H{
 		"title":   fmt.Sprintf("Posts tagged with %s", tag),
 		"posts":   posts,
 		"noPosts": len(posts) == 0,
-	})
+	}))
 }
 
 func (r *Router) HandleNotFound(ctx *gin.Context) {
-	ctx.HTML(404, "notFound", gin.H{
+	ctx.HTML(404, "notFound", addHXRequest(ctx, gin.H{
 		"title": "Content Not Found",
-	})
+	}))
 }
 
 func (r *Router) HandleInternalServerError(ctx *gin.Context) {
-	ctx.HTML(500, "notFound", gin.H{
+	ctx.HTML(500, "notFound", addHXRequest(ctx, gin.H{
 		"title": "Internal Server Error",
-	})
+	}))
 }
 
 func (r *Router) HandleHealth(ctx *gin.Context) {
 	ctx.JSON(200, gin.H{
 		"status": "ok",
 	})
+}
+
+func addHXRequest(ctx *gin.Context, h gin.H) gin.H {
+	hxRequest, exists := ctx.Get("isHXRequest")
+	h["isHXRequest"] = exists && hxRequest.(bool)
+	return h
 }
