@@ -13,7 +13,7 @@
 </head>
 
 <body class="bg-neutral-900 text-white">
-<div class="sticky top-0 flex justify-between w-full bg-neutral-800 px-4">
+<div class="sticky top-0 flex justify-between w-full bg-neutral-800 px-4 z-50">
   <div class="flex h-100 items-center">
     <span class="text-2xl">blog.simoni.dev</span>
   </div>
@@ -21,7 +21,7 @@
   <div>
     <ul class="flex list-none items-stretch">
       <li
-              hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms"
+              hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms show:window:top"
               class="flex pt-1 mr-6 hover:text-purple-600 hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
         <a class="flex py-4 items-center static text-2xl" href="/">Home</a>
       </li>
@@ -37,7 +37,7 @@
   </div>
 </div>
 
-<div id="main-container" class="flex flex-col gap-10 w-full items-center my-10" hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms">
+<div id="main-container" class="flex flex-col gap-10 w-full items-center my-10" hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms show:window:top">
   {{ end }}
 
   {{ template "content" . }}
