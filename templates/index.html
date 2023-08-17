@@ -1,6 +1,6 @@
 {{ define "content" }}
     {{ range .posts }}
-        <section class="w-1/2">
+        <section class="md:w-1/2 w-5/6">
             <h1 class="text-4xl mb-4">
                 <a class="hover:underline" href="{{ . | getSlug }}">{{ .Title }}</a>
             </h1>

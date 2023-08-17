@@ -10,6 +10,10 @@ module.exports = {
             },
         },
     },
-    plugins: [],
+    plugins: [
+        function ({ addVariant }) {
+            addVariant('child', '& > *');
+        }
+    ],
 }
 

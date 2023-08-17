@@ -6,16 +6,21 @@
     @apply text-white;
 }
 
-body {
-    @apply bg-neutral-800;
-}
-
 .htmx-swapping {
     opacity: 0;
     transition: opacity 300ms ease-out;
 }
 
 .htmx-settling {
-    opacity: 100;
     transition: opacity 300ms ease-out;
+}
+
+.no-highlights{
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }

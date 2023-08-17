@@ -5,42 +5,52 @@
 <head>
   <meta charset="UTF-8">
   <title>{{ .title }}</title>
-  <link rel="stylesheet" href="/css/main.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="/js/hyperscript.min.js"></script>
   <script src="/js/htmx.min.js"></script>
 </head>
 
 <body class="bg-neutral-900 text-white">
-<div class="sticky top-0 flex justify-between w-full bg-neutral-800 px-4 z-50">
-  <div class="flex h-100 items-center">
-    <span class="text-2xl">blog.simoni.dev</span>
-  </div>
-  <!-- Use <nav> element here -->
-  <div>
-    <ul class="flex list-none items-stretch">
-      <li
-              hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms show:window:top"
-              class="flex pt-1 mr-6 hover:text-purple-600 hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
-        <a class="flex py-4 items-center static text-2xl" href="/">Home</a>
-      </li>
-      <li
-              class="flex pt-1 mr-6 hover:text-purple-600 hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
-        <a class="flex py-4 items-center static text-2xl" href="https://simoni.dev/">Portfolio</a>
-      </li>
-      <li
-              class="hidden flex pt-1 mr-6 hover:text-purple-600 hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
-        <a class="flex py-4 items-center static text-2xl" href="login.html">Log in</a>
-      </li>
-    </ul>
-  </div>
-</div>
+  <nav class="flex align-center py-3 px-4 sticky top-0 bg-neutral-800 z-50 md:flex-nowrap flex-wrap md:justify-start">
+    <div hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms show:window:top"
+         class="flex md:flex-nowrap flex-wrap items-center justify-between w-full mr-auto ml-auto">
+      <a class="text-2xl py-[0.3125rem] mr-4 no-highlights" href="/">blog.simoni.dev</a>
+      <input class="peer hidden" type="checkbox" id="navbar-check" />
+
+      <label class="md:hidden peer-checked:[&>#bar1]:translate-y-2 peer-checked:[&>#bar1]:rotate-45 peer-checked:[&>#bar2]:opacity-0 peer-checked:[&>#bar2]:translate-x-4 peer-checked:[&>#bar3]:-translate-y-2 peer-checked:[&>#bar3]:-rotate-45" for="navbar-check">
+        <div id="bar1" class="my-1 h-1 w-6 bg-white rounded-full transition-transform duration-300"></div>
+        <div id="bar2" class="my-1 h-1 w-6 bg-white rounded-full transition-all duration-300"></div>
+        <div id="bar3" class="my-1 h-1 w-6 bg-white rounded-full transition-transform duration-300"></div>
+      </label>
+
+      <div id="navbar" class="flex md:z-0 peer-checked:z-0 -z-10 md:basis-auto basis-full flex-grow-[1] max-h-[0px] peer-checked:max-h-[500px] md:max-h-[500px] transition-all duration-500 peer-checked:!opacity-100 md:opacity-100 opacity-0 items-center">
+        <ul class="flex flex-col pl-0 mb-0 list-none mt-2 me-auto md:flex-row">
+          <li
+                  class="flex pt-1 mr-6 md:hover:text-purple-600 active:text-purple-600 md:hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
+            <a class="flex py-4 items-center static text-2xl no-highlights" href="/">Home</a>
+          </li>
+          <li
+                  hx-boost="false"
+                  class="flex pt-1 mr-6 md:hover:text-purple-600 active:text-purple-600 md:hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
+            <a class="flex py-4 items-center static text-2xl no-highlights" href="https://simoni.dev/">Portfolio</a>
+          </li>
+          <li
+                  class="hidden flex pt-1 mr-6 hover:text-purple-600 hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
+            <a class="flex py-4 items-center static text-2xl" href="login.html">Log in</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
 <div id="main-container" class="flex flex-col gap-10 w-full items-center my-10" hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms show:window:top">
   {{ end }}
 
-  {{ template "content" . }}
+    {{ template "content" . }}
 
   {{ if not .isHXRequest }}
 </div>
