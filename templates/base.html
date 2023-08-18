@@ -20,24 +20,26 @@
          class="flex md:flex-nowrap flex-wrap items-center justify-between w-full mr-auto ml-auto">
       <a class="text-2xl py-[0.3125rem] mr-4 no-highlights" href="/">blog.simoni.dev</a>
       <input class="peer hidden" type="checkbox" id="navbar-check"
-        _="on change if event.currentTarget.checked then
-          remove .collapsed from #navbar then
-          add .collapsing to #navbar then
-          measure #navbar scrollHeight then
-          add { height: ${scrollHeight}px; } to #navbar then
-          settle then
-          add .collapsed to #navbar then
-          add .show to #navbar then
-          remove .collapsing from #navbar
-        else
-          add .collapsing to #navbar then
-          remove .collapsed from #navbar then
-          remove .show from #navbar then
-          add { height: 0px; } to #navbar then
-          settle then
-          add .collapsed to #navbar then
-          remove .collapsing from #navbar
-        end" />
+        _="on change debounced at 150ms
+          if my.checked then
+            add { height: 0px; } to #navbar then
+            remove .collapsed from #navbar then
+            add .collapsing to #navbar then
+            measure #navbar scrollHeight then
+            add { height: ${scrollHeight}px; } to #navbar then
+            settle then
+            add .collapsed to #navbar then
+            add .show to #navbar then
+            remove .collapsing from #navbar
+          else
+            remove .collapsed from #navbar then
+            remove .show from #navbar then
+            add .collapsing to #navbar then
+            add { height: 0px; } to #navbar then
+            settle then
+            add .collapsed to #navbar then
+            remove .collapsing from #navbar
+          end" />
 
       <label class="md:hidden peer-checked:[&>#bar1]:translate-y-2 peer-checked:[&>#bar1]:rotate-45 peer-checked:[&>#bar2]:opacity-0 peer-checked:[&>#bar2]:translate-x-4 peer-checked:[&>#bar3]:-translate-y-2 peer-checked:[&>#bar3]:-rotate-45" for="navbar-check">
         <div id="bar1" class="my-1 h-1 w-6 bg-white rounded-full transition-transform duration-300"></div>

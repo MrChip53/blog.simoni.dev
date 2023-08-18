@@ -31,12 +31,10 @@
 
 .collapsing {
     display: block;
-    height: 0;
     overflow: hidden;
     transition: height 0.35s ease;
 }
 
 .collapsed.show {
     display: block;
-    height: auto;
 }
