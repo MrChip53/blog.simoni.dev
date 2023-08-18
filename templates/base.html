@@ -19,7 +19,26 @@
     <div hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms show:window:top"
          class="flex md:flex-nowrap flex-wrap items-center justify-between w-full mr-auto ml-auto">
       <a class="text-2xl py-[0.3125rem] mr-4 no-highlights" href="/">blog.simoni.dev</a>
-      <input class="peer hidden" type="checkbox" id="navbar-check" />
+      <input class="peer hidden" type="checkbox" id="navbar-check"
+        _="on change if event.currentTarget.checked then
+          remove .collapsed from #navbar then
+          add .collapsing to #navbar then
+          measure #navbar scrollHeight then
+          add { height: ${scrollHeight}px; } to #navbar then
+          settle then
+          add .collapsed to #navbar then
+          add .show to #navbar then
+          remove height from #navbar then
+          remove .collapsing from #navbar
+        else
+          add .collapsing to #navbar then
+          remove .collapsed from #navbar then
+          remove .show from #navbar then
+          add { height: 0px; } to #navbar then
+          settle then
+          add .collapsed to #navbar then
+          remove .collapsing from #navbar
+        end" />
 
       <label class="md:hidden peer-checked:[&>#bar1]:translate-y-2 peer-checked:[&>#bar1]:rotate-45 peer-checked:[&>#bar2]:opacity-0 peer-checked:[&>#bar2]:translate-x-4 peer-checked:[&>#bar3]:-translate-y-2 peer-checked:[&>#bar3]:-rotate-45" for="navbar-check">
         <div id="bar1" class="my-1 h-1 w-6 bg-white rounded-full transition-transform duration-300"></div>
@@ -27,7 +46,7 @@
         <div id="bar3" class="my-1 h-1 w-6 bg-white rounded-full transition-transform duration-300"></div>
       </label>
 
-      <div id="navbar" class="flex md:z-0 peer-checked:z-0 -z-10 md:basis-auto basis-full flex-grow-[1] max-h-[0px] peer-checked:max-h-[500px] md:max-h-[500px] transition-all duration-500 peer-checked:!opacity-100 md:opacity-100 opacity-0 items-center">
+      <div id="navbar" class="flex md:basis-auto basis-full flex-grow-[1] items-center collapsed">
         <ul class="flex flex-col pl-0 mb-0 list-none mt-2 me-auto md:flex-row">
           <li
                   class="flex pt-1 mr-6 md:hover:text-purple-600 active:text-purple-600 md:hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">

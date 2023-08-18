@@ -24,3 +24,19 @@
     -ms-user-select: none;
     user-select: none;
 }
+
+.collapsed:not(.show) {
+    display: none;
+}
+
+.collapsing {
+    display: block;
+    height: 0;
+    overflow: hidden;
+    transition: height 0.35s ease;
+}
+
+.collapsed.show {
+    display: block;
+    height: auto;
+}
