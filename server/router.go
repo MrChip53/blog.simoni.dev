@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"html/template"
 	"log"
@@ -35,6 +36,9 @@ func createRenderer(templatePath string) multitemplate.Renderer {
 	// Admin pages
 	r.AddFromFilesFuncs("adminLogin", funcMap, basePath, path.Join(templatePath, "admin/login.html"))
 	r.AddFromFilesFuncs("adminDashboard", funcMap, basePath, path.Join(templatePath, "admin/dashboard.html"))
+
+	// Components
+	r.AddFromFilesFuncs("toast", funcMap, path.Join(templatePath, "components/toast.html"))
 
 	// Error pages
 	r.AddFromFilesFuncs("notFound", funcMap, basePath, path.Join(templatePath, "errors/404.html"))
@@ -135,39 +139,47 @@ func (r *Router) HandleAdminLoginRequest(ctx *gin.Context) {
 	var user models.User
 	if err := r.Db.Where("username = ?", username).First(&user).Error; err != nil {
 		log.Println("AdminLogin failed to get user:", err)
-		ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
-			"title": "Admin Login",
-			"path":  ctx.Request.URL.Path,
-			"error": "Invalid username or password",
-		}))
+		r.HandleError(ctx, "Invalid username or password", func(ctx *gin.Context) {
+			ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
+				"title": "Admin Login",
+				"path":  ctx.Request.URL.Path,
+				"error": "Invalid username or password",
+			}))
+		}, err)
 		return
 	}
 
 	if match, err := user.VerifyPassword(password); err != nil {
 		log.Println("AdminLogin failed to verify password:", err)
-		ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
-			"title": "Admin Login",
-			"path":  ctx.Request.URL.Path,
-			"error": "Invalid username or password",
-		}))
+		r.HandleError(ctx, "Invalid username or password", func(ctx *gin.Context) {
+			ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
+				"title": "Admin Login",
+				"path":  ctx.Request.URL.Path,
+				"error": "Invalid username or password",
+			}))
+		}, err)
 		return
 	} else if !match {
-		ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
-			"title": "Admin Login",
-			"path":  ctx.Request.URL.Path,
-			"error": "Invalid username or password",
-		}))
+		r.HandleError(ctx, "Invalid username or password", func(ctx *gin.Context) {
+			ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
+				"title": "Admin Login",
+				"path":  ctx.Request.URL.Path,
+				"error": "Invalid username or password",
+			}))
+		}, err)
 		return
 	}
 
 	err := user.NewAuthTokens(ctx)
 	if err != nil {
 		log.Println("AdminLogin failed to generate tokens:", err)
-		ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
-			"title": "Admin Login",
-			"path":  ctx.Request.URL.Path,
-			"error": "Something went wrong",
-		}))
+		r.HandleError(ctx, "Invalid username or password", func(ctx *gin.Context) {
+			ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
+				"title": "Admin Login",
+				"path":  ctx.Request.URL.Path,
+				"error": "Something went wrong",
+			}))
+		}, err)
 		return
 	}
 
@@ -199,6 +211,29 @@ func (r *Router) HandleAdminLogin(ctx *gin.Context) {
 		"title":    "Admin Login",
 		"redirect": redirect,
 	}))
+}
+
+func (r *Router) HandleError(ctx *gin.Context, message string, fn func(ctx *gin.Context), err error) {
+	uuid := uuid.New().String()
+
+	hxRequest, exists := ctx.Get("isHXRequest")
+	if exists && hxRequest.(bool) {
+		ctx.Header("HX-Retarget", "#toastContainer")
+		ctx.Header("HX-Reswap", "beforeend")
+		ctx.HTML(200, "toast", gin.H{
+			"toastId": "toast-" + uuid,
+			"toast":   message,
+		})
+		return
+	}
+
+	if fn != nil {
+		fn(ctx)
+	} else {
+		ctx.HTML(500, "notFound", gin.H{
+			"title": "Internal Server Error",
+		})
+	}
 }
 
 func addHXRequest(ctx *gin.Context, h gin.H) gin.H {

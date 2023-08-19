@@ -67,13 +67,15 @@
     </div>
   </nav>
 
-<div id="main-container" class="flex flex-col gap-10 w-full items-center my-10" hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms show:window:top">
-  {{ end }}
+  <div id="main-container" class="flex flex-col gap-10 w-full items-center my-10" hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms show:window:top">
+    {{ end }}
 
-    {{ template "content" . }}
+      {{ template "content" . }}
 
-  {{ if not .isHXRequest }}
-</div>
+    {{ if not .isHXRequest }}
+  </div>
+
+  <div id="toastContainer" class="fixed flex flex-col gap-2 bottom-0 right-0 p-3"></div>
 </body>
 
 </html>
