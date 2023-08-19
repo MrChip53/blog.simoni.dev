@@ -1,6 +1,7 @@
 package server
 
 import (
+	"blog.simoni.dev/auth"
 	"blog.simoni.dev/models"
 	"fmt"
 	"github.com/gin-contrib/multitemplate"
@@ -174,8 +175,16 @@ func (r *Router) HandleAdminLoginRequest(ctx *gin.Context) {
 }
 
 func (r *Router) HandleAdminDashboard(ctx *gin.Context) {
+	claims := ctx.MustGet("authToken").(*auth.JwtPayload)
+	if claims == nil {
+		ctx.Redirect(302, "/admin/login?redirect="+ctx.Request.URL.Path)
+		ctx.Abort()
+		return
+	}
+
 	ctx.HTML(200, "adminDashboard", addHXRequest(ctx, gin.H{
-		"title": "Admin Dashboard",
+		"title":    "Admin Dashboard",
+		"username": claims.Username,
 	}))
 }
 

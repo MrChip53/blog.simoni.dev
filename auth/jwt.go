@@ -20,19 +20,11 @@ type JwtRefreshPayload struct {
 
 func ExtractAuth(ctx *gin.Context) (jwtPayload *JwtPayload, err error) {
 	jwtCookie, err := ctx.Request.Cookie("token")
-	if err != nil {
-		jwtPayload, err = refreshTokens(ctx)
-		if err != nil {
-			return nil, err
-		}
+	if err != nil || jwtCookie == nil {
+		return refreshTokens(ctx)
 	}
 
-	jwtPayload, err = VerifyJwtToken(jwtCookie.Value)
-	if err != nil {
-		return nil, err
-	}
-
-	return jwtPayload, nil
+	return VerifyJwtToken(jwtCookie.Value)
 }
 
 func AddAuthCookies(ctx *gin.Context, jwtToken string, refreshToken string) {
@@ -42,7 +34,7 @@ func AddAuthCookies(ctx *gin.Context, jwtToken string, refreshToken string) {
 		Path:     "/",
 		Domain:   "",
 		MaxAge:   60,
-		SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteStrictMode,
 		Secure:   true,
 		HttpOnly: true,
 	}
@@ -54,7 +46,7 @@ func AddAuthCookies(ctx *gin.Context, jwtToken string, refreshToken string) {
 		Path:     "/",
 		Domain:   "",
 		MaxAge:   60 * 60 * 3,
-		SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteStrictMode,
 		Secure:   true,
 		HttpOnly: true,
 	}
