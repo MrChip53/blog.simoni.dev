@@ -62,7 +62,7 @@ func (r *Router) HandleIndex(ctx *gin.Context) {
 		return
 	}
 
-	ctx.HTML(200, "index", addHXRequest(ctx, gin.H{
+	ctx.HTML(200, "index", addGenerics(ctx, gin.H{
 		"title":   "mrchip53's blog",
 		"posts":   posts,
 		"noPosts": len(posts) == 0,
@@ -78,13 +78,13 @@ func (r *Router) HandlePost(ctx *gin.Context) {
 	var post models.BlogPost
 	if err := r.Db.Preload("Tags").Where("day(created_at) = ? AND month(created_at) = ? AND year(created_at) = ? AND slug = ?", day, month, year, slug).First(&post).Error; err != nil {
 		log.Println("Index failed to get posts:", err)
-		ctx.HTML(404, "notFound", addHXRequest(ctx, gin.H{
+		ctx.HTML(404, "notFound", addGenerics(ctx, gin.H{
 			"title": "Content Not Found",
 		}))
 		return
 	}
 
-	ctx.HTML(200, "post", addHXRequest(ctx, gin.H{
+	ctx.HTML(200, "post", addGenerics(ctx, gin.H{
 		"title": post.Title,
 		"post":  post,
 	}))
@@ -110,7 +110,7 @@ func (r *Router) HandleTag(ctx *gin.Context) {
 		return
 	}
 
-	ctx.HTML(200, "index", addHXRequest(ctx, gin.H{
+	ctx.HTML(200, "index", addGenerics(ctx, gin.H{
 		"title":   fmt.Sprintf("Posts tagged with %s", tag),
 		"posts":   posts,
 		"noPosts": len(posts) == 0,
@@ -118,13 +118,13 @@ func (r *Router) HandleTag(ctx *gin.Context) {
 }
 
 func (r *Router) HandleNotFound(ctx *gin.Context) {
-	ctx.HTML(404, "notFound", addHXRequest(ctx, gin.H{
+	ctx.HTML(404, "notFound", addGenerics(ctx, gin.H{
 		"title": "Content Not Found",
 	}))
 }
 
 func (r *Router) HandleInternalServerError(ctx *gin.Context) {
-	ctx.HTML(500, "notFound", addHXRequest(ctx, gin.H{
+	ctx.HTML(500, "notFound", addGenerics(ctx, gin.H{
 		"title": "Internal Server Error",
 	}))
 }
@@ -144,7 +144,7 @@ func (r *Router) HandleAdminLoginRequest(ctx *gin.Context) {
 	if err := r.Db.Where("username = ?", username).First(&user).Error; err != nil {
 		log.Println("AdminLogin failed to get user:", err)
 		r.HandleError(ctx, "Invalid username or password", func(ctx *gin.Context) {
-			ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
+			ctx.HTML(200, "adminLogin", addGenerics(ctx, gin.H{
 				"title": "Admin Login",
 				"path":  ctx.Request.URL.Path,
 				"error": "Invalid username or password",
@@ -156,7 +156,7 @@ func (r *Router) HandleAdminLoginRequest(ctx *gin.Context) {
 	if match, err := user.VerifyPassword(password); err != nil {
 		log.Println("AdminLogin failed to verify password:", err)
 		r.HandleError(ctx, "Invalid username or password", func(ctx *gin.Context) {
-			ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
+			ctx.HTML(200, "adminLogin", addGenerics(ctx, gin.H{
 				"title": "Admin Login",
 				"path":  ctx.Request.URL.Path,
 				"error": "Invalid username or password",
@@ -165,7 +165,7 @@ func (r *Router) HandleAdminLoginRequest(ctx *gin.Context) {
 		return
 	} else if !match {
 		r.HandleError(ctx, "Invalid username or password", func(ctx *gin.Context) {
-			ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
+			ctx.HTML(200, "adminLogin", addGenerics(ctx, gin.H{
 				"title": "Admin Login",
 				"path":  ctx.Request.URL.Path,
 				"error": "Invalid username or password",
@@ -178,7 +178,7 @@ func (r *Router) HandleAdminLoginRequest(ctx *gin.Context) {
 	if err != nil {
 		log.Println("AdminLogin failed to generate tokens:", err)
 		r.HandleError(ctx, "Invalid username or password", func(ctx *gin.Context) {
-			ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
+			ctx.HTML(200, "adminLogin", addGenerics(ctx, gin.H{
 				"title": "Admin Login",
 				"path":  ctx.Request.URL.Path,
 				"error": "Something went wrong",
@@ -198,10 +198,9 @@ func (r *Router) HandleAdminDashboard(ctx *gin.Context) {
 		return
 	}
 
-	ctx.HTML(200, "adminDashboard", addHXRequest(ctx, gin.H{
-		"title":      "Admin Dashboard",
-		"username":   claims.Username,
-		"adminRoute": adminRoute,
+	ctx.HTML(200, "adminDashboard", addGenerics(ctx, gin.H{
+		"title":    "Admin Dashboard",
+		"username": claims.Username,
 	}))
 }
 
@@ -212,17 +211,15 @@ func (r *Router) HandleAdminLogin(ctx *gin.Context) {
 		redirect = adminRoute
 	}
 
-	ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
-		"title":      "Admin Login",
-		"redirect":   redirect,
-		"adminRoute": adminRoute,
+	ctx.HTML(200, "adminLogin", addGenerics(ctx, gin.H{
+		"title":    "Admin Login",
+		"redirect": redirect,
 	}))
 }
 
 func (r *Router) HandleAdminNewBlogPost(ctx *gin.Context) {
-	ctx.HTML(200, "adminNewPost", addHXRequest(ctx, gin.H{
-		"title":      "New Blog Post",
-		"adminRoute": adminRoute,
+	ctx.HTML(200, "adminNewPost", addGenerics(ctx, gin.H{
+		"title": "New Blog Post",
 	}))
 }
 
@@ -283,6 +280,43 @@ func (r *Router) HandleAdminNewBlogPostRequest(ctx *gin.Context) {
 	ctx.Redirect(302, adminRoute)
 }
 
+func (r *Router) HandleAdminPostsDelete(ctx *gin.Context) {
+	err := r.Db.Transaction(func(tx *gorm.DB) error {
+		var blogPost models.BlogPost
+		if err := tx.First(&blogPost, ctx.Param("id")).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Delete(&blogPost).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		r.HandleError(ctx, "Failed to delete post", nil, err)
+		return
+	}
+
+	r.HandleAdminPosts(ctx)
+}
+
+func (r *Router) HandleAdminPosts(ctx *gin.Context) {
+	var posts []models.BlogPost
+	if err := r.Db.Preload("Tags").Order("created_at DESC").Limit(10).Find(&posts).Error; err != nil {
+		log.Println("Index failed to get posts:", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	ctx.HTML(200, "index", addGenerics(ctx, gin.H{
+		"title":     "Posts",
+		"posts":     posts,
+		"noPosts":   len(posts) == 0,
+		"canDelete": true,
+	}))
+}
+
 func (r *Router) HandleError(ctx *gin.Context, message string, fn func(ctx *gin.Context), err error) {
 	toastId := uuid.New().String()
 
@@ -306,8 +340,9 @@ func (r *Router) HandleError(ctx *gin.Context, message string, fn func(ctx *gin.
 	}
 }
 
-func addHXRequest(ctx *gin.Context, h gin.H) gin.H {
+func addGenerics(ctx *gin.Context, h gin.H) gin.H {
 	hxRequest, exists := ctx.Get("isHXRequest")
 	h["isHXRequest"] = exists && hxRequest.(bool)
+	h["adminRoute"] = adminRoute
 	return h
 }
