@@ -18,7 +18,8 @@ func ExtractAuth() gin.HandlerFunc {
 		authToken, err := auth.ExtractAuth(ctx)
 		if err != nil {
 			log.Printf("Failed to extract auth: %v\n", err)
-			if ctx.Request.URL.Path[:6] == "/admin" && ctx.Request.URL.Path != "/admin/login" {
+			pathLength := len(ctx.Request.URL.Path)
+			if pathLength >= 6 && ctx.Request.URL.Path[:6] == "/admin" && ctx.Request.URL.Path != "/admin/login" {
 				ctx.Redirect(302, "/admin/login?redirect="+ctx.Request.URL.Path)
 				ctx.Abort()
 			}
@@ -26,6 +27,12 @@ func ExtractAuth() gin.HandlerFunc {
 		}
 
 		ctx.Set("authToken", authToken)
+
+		if ctx.Request.URL.Path == "/admin/login" {
+			ctx.Redirect(302, "/admin")
+			ctx.Abort()
+			return
+		}
 		ctx.Next()
 	}
 }

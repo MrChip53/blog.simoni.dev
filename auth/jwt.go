@@ -50,7 +50,7 @@ func AddAuthCookies(ctx *gin.Context, jwtToken string, refreshToken string) {
 
 	refreshCookie := http.Cookie{
 		Name:     "refreshToken",
-		Value:    jwtToken,
+		Value:    refreshToken,
 		Path:     "/",
 		Domain:   "",
 		MaxAge:   60 * 60 * 3,
