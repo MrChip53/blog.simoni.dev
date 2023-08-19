@@ -33,20 +33,20 @@ func main() {
 			DisableForeignKeyConstraintWhenMigrating: true,
 		})
 	if err != nil {
-		log.Fatal("failed to open db connection", err)
+		log.Fatal("failed to open db connection ", err)
 	}
 
-	err = db.AutoMigrate(&models.BlogPost{}, &models.Tag{})
+	err = db.AutoMigrate(&models.BlogPost{}, &models.Tag{}, &models.User{})
 	if err != nil {
-		log.Fatal("failed to migrate db", err)
+		log.Fatal("failed to migrate db: ", err)
 	}
 
 	engine, err := server.NewServer(db)
 	if err != nil {
-		log.Fatal("failed to create server", err)
+		log.Fatal("failed to create server: ", err)
 	}
 
 	if err = engine.Run(":8080"); err != nil {
-		log.Fatal("failed to run server", err)
+		log.Fatal("failed to run server: ", err)
 	}
 }

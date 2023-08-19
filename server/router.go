@@ -26,8 +26,14 @@ func createRenderer(templatePath string) multitemplate.Renderer {
 	basePath := path.Join(templatePath, "base.html")
 
 	r := multitemplate.NewRenderer()
+
+	// Regular pages
 	r.AddFromFilesFuncs("index", funcMap, basePath, path.Join(templatePath, "index.html"))
 	r.AddFromFilesFuncs("post", funcMap, basePath, path.Join(templatePath, "post.html"))
+
+	// Admin pages
+	r.AddFromFilesFuncs("adminLogin", funcMap, basePath, path.Join(templatePath, "admin/login.html"))
+	r.AddFromFilesFuncs("adminDashboard", funcMap, basePath, path.Join(templatePath, "admin/dashboard.html"))
 
 	// Error pages
 	r.AddFromFilesFuncs("notFound", funcMap, basePath, path.Join(templatePath, "errors/404.html"))
@@ -118,6 +124,56 @@ func (r *Router) HandleHealth(ctx *gin.Context) {
 	ctx.JSON(200, gin.H{
 		"status": "ok",
 	})
+}
+
+func (r *Router) HandleAdminLoginRequest(ctx *gin.Context) {
+	username := ctx.PostForm("username")
+	password := ctx.PostForm("password")
+
+	var user models.User
+	if err := r.Db.Where("username = ?", username).First(&user).Error; err != nil {
+		log.Println("AdminLogin failed to get user:", err)
+		ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
+			"title": "Admin Login",
+			"path":  ctx.Request.URL.Path,
+			"error": "Invalid username or password",
+		}))
+		return
+	}
+
+	if match, err := user.VerifyPassword(password); err != nil {
+		log.Println("AdminLogin failed to verify password:", err)
+		ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
+			"title": "Admin Login",
+			"path":  ctx.Request.URL.Path,
+			"error": "Invalid username or password",
+		}))
+		return
+	} else if !match {
+		ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
+			"title": "Admin Login",
+			"path":  ctx.Request.URL.Path,
+			"error": "Invalid username or password",
+		}))
+		return
+	}
+
+	ctx.SetCookie("token", "", 60, "/", "blog.simoni.dev", true, true)
+	ctx.SetCookie("refreshToken", "", 60*60*3, "/", "blog.simoni.dev", true, true)
+	ctx.Redirect(302, adminRoute)
+}
+
+func (r *Router) HandleAdminDashboard(ctx *gin.Context) {
+	ctx.HTML(200, "adminDashboard", addHXRequest(ctx, gin.H{
+		"title": "Admin Dashboard",
+	}))
+}
+
+func HandleAdminLogin(ctx *gin.Context) {
+	ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
+		"title": "Admin Login",
+		"path":  ctx.Request.URL.Path,
+	}))
 }
 
 func addHXRequest(ctx *gin.Context, h gin.H) gin.H {

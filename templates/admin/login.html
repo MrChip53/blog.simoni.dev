@@ -1,0 +1,10 @@
+{{ define "content" }}
+Login
+<form method="POST" action="/admin/login" hx-headers='{"x-csrf-token": "csrf"}'>
+    <input type="hidden" name="path" value="{{ .path }}" />
+    <input class="text-black" type="text" name="username" placeholder="Username" />
+    <input class="text-black" type="password" name="password" placeholder="Password" />
+    <input type="submit" value="Log in" />
+</form>
+<span class="text-red-500">{{ .error }}</span>
+{{ end }}

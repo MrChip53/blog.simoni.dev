@@ -6,12 +6,7 @@ import (
 	"log"
 )
 
-func isHXRequest() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		ctx.Set("isHXRequest", ctx.Request.Header.Get("HX-Request") == "true")
-		ctx.Next()
-	}
-}
+var adminRoute = "/admin"
 
 func NewServer(db *gorm.DB) (*gin.Engine, error) {
 	router := NewRouter(db)
@@ -25,7 +20,8 @@ func NewServer(db *gorm.DB) (*gin.Engine, error) {
 		return nil, err
 	}
 
-	engine.Use(isHXRequest())
+	engine.Use(IsHXRequest())
+	engine.Use(ExtractAuth())
 
 	engine.Static("/css", "css")
 	engine.Static("/js", "js")
@@ -33,9 +29,16 @@ func NewServer(db *gorm.DB) (*gin.Engine, error) {
 
 	engine.NoRoute(router.HandleNotFound)
 
+	// Regular pages
 	engine.GET("/", router.HandleIndex)
 	engine.GET("/post/:month/:day/:year/:slug", router.HandlePost)
 	engine.GET("/tag/:tag", router.HandleTag)
+
+	// Admin pages
+	engine.GET(adminRoute, router.HandleAdminDashboard)
+
+	//engine.POST(adminRoute+"/login", router.HandleAdminLoginRequest)
+
 	engine.GET("/hp", router.HandleHealth)
 
 	return engine, nil
