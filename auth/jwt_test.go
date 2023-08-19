@@ -12,7 +12,7 @@ func TestJwtTokens(t *testing.T) {
 		t.Error(err)
 	}
 
-	token, refreshToken, err := GenerateTokens(JwtPayload{
+	token, refreshToken, err := GenerateTokens(&JwtPayload{
 		Username: "test",
 		Admin:    true,
 		UserId:   1,

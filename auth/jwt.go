@@ -113,7 +113,7 @@ func verifyRefreshToken(token string, jwtSecret []byte) (payload *JwtRefreshPayl
 
 	if _, ok := jwtToken.Claims.(jwt.MapClaims); ok && jwtToken.Valid {
 		payload = &JwtRefreshPayload{
-			JwtToken: token,
+			JwtToken: jwtToken.Claims.(jwt.MapClaims)["jwtToken"].(string),
 		}
 		return payload, nil
 	}
