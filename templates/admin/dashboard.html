@@ -1,3 +1,4 @@
 {{ define "content" }}
   Hello, {{ .username }}!
+<a hx-boost="true" href="{{ .adminRoute }}/new-post">New Post</a>
 {{ end }}

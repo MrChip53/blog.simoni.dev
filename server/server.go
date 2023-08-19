@@ -36,9 +36,11 @@ func NewServer(db *gorm.DB) (*gin.Engine, error) {
 
 	// Admin pages
 	engine.GET(adminRoute, router.HandleAdminDashboard)
-
-	//engine.POST(adminRoute+"/login", router.HandleAdminLoginRequest)
 	engine.GET(adminRoute+"/login", router.HandleAdminLogin)
+	engine.GET(adminRoute+"/new-post", router.HandleAdminNewBlogPost)
+
+	engine.POST(adminRoute+"/login", router.HandleAdminLoginRequest)
+	engine.POST(adminRoute+"/new-post", router.HandleAdminNewBlogPostRequest)
 
 	engine.GET("/hp", router.HandleHealth)
 

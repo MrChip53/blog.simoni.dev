@@ -10,3 +10,31 @@ type BlogPost struct {
 	Content string `gorm:"type:text"`
 	Tags    []Tag  `gorm:"many2many:blog_post_tags;"`
 }
+
+func NewBlogPost(db *gorm.DB, title string, author string, slug string, content string) (newPost *BlogPost, err error) {
+	newPost = &BlogPost{
+		Title:   title,
+		Slug:    slug,
+		Content: content,
+		Author:  author,
+	}
+
+	if err := db.Create(newPost).Error; err != nil {
+		return nil, err
+	}
+
+	return newPost, nil
+}
+
+func (p *BlogPost) AddTag(tag *Tag) {
+	p.Tags = append(p.Tags, *tag)
+}
+
+func (p *BlogPost) UpdateTags(tx *gorm.DB) error {
+	err := tx.Model(p).Association("Tags").Replace(p.Tags)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

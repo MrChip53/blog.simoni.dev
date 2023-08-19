@@ -12,6 +12,8 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"strings"
+	"time"
 )
 
 type Router struct {
@@ -34,8 +36,10 @@ func createRenderer(templatePath string) multitemplate.Renderer {
 	r.AddFromFilesFuncs("post", funcMap, basePath, path.Join(templatePath, "post.html"))
 
 	// Admin pages
-	r.AddFromFilesFuncs("adminLogin", funcMap, basePath, path.Join(templatePath, "admin/login.html"))
+
 	r.AddFromFilesFuncs("adminDashboard", funcMap, basePath, path.Join(templatePath, "admin/dashboard.html"))
+	r.AddFromFilesFuncs("adminLogin", funcMap, basePath, path.Join(templatePath, "admin/login.html"))
+	r.AddFromFilesFuncs("adminNewPost", funcMap, basePath, path.Join(templatePath, "admin/new-post.html"))
 
 	// Components
 	r.AddFromFilesFuncs("toast", funcMap, path.Join(templatePath, "components/toast.html"))
@@ -195,8 +199,9 @@ func (r *Router) HandleAdminDashboard(ctx *gin.Context) {
 	}
 
 	ctx.HTML(200, "adminDashboard", addHXRequest(ctx, gin.H{
-		"title":    "Admin Dashboard",
-		"username": claims.Username,
+		"title":      "Admin Dashboard",
+		"username":   claims.Username,
+		"adminRoute": adminRoute,
 	}))
 }
 
@@ -208,20 +213,85 @@ func (r *Router) HandleAdminLogin(ctx *gin.Context) {
 	}
 
 	ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
-		"title":    "Admin Login",
-		"redirect": redirect,
+		"title":      "Admin Login",
+		"redirect":   redirect,
+		"adminRoute": adminRoute,
 	}))
 }
 
+func (r *Router) HandleAdminNewBlogPost(ctx *gin.Context) {
+	ctx.HTML(200, "adminNewPost", addHXRequest(ctx, gin.H{
+		"title":      "New Blog Post",
+		"adminRoute": adminRoute,
+	}))
+}
+
+func (r *Router) HandleAdminNewBlogPostRequest(ctx *gin.Context) {
+	title := ctx.PostForm("title")
+	tags := strings.Split(ctx.PostForm("tags"), ",")
+	content := ctx.PostForm("content")
+	slug := strings.ReplaceAll(title, " ", "-")
+
+	jwt, exists := ctx.Get("authToken")
+	if !exists {
+		r.HandleError(ctx, "You are not logged in", nil, nil)
+		return
+	}
+	author := jwt.(*auth.JwtPayload).Username
+
+	tx := r.Db.Begin()
+	newPost, err := models.NewBlogPost(tx, title, author, slug, content)
+	if err != nil {
+		tx.Rollback()
+		r.HandleError(ctx, "Failed to create blog post", nil, err)
+		return
+	}
+
+	for _, tag := range tags {
+		tagModel, err := models.GetTag(tx, tag)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				tagModel, err = models.NewTag(tx, tag)
+				if err != nil {
+					tx.Rollback()
+					r.HandleError(ctx, "Failed to create blog post", nil, err)
+					return
+				}
+			} else {
+				tx.Rollback()
+				r.HandleError(ctx, "Failed to create blog post", nil, err)
+				return
+			}
+		}
+		// TODO why is this needed?
+		time.Sleep(10 * time.Millisecond)
+		newPost.AddTag(tagModel)
+	}
+
+	err = newPost.UpdateTags(tx)
+	if err != nil {
+		tx.Rollback()
+		r.HandleError(ctx, "Failed to create blog post", nil, err)
+		return
+	}
+
+	if err = tx.Commit().Error; err != nil {
+		r.HandleError(ctx, "Failed to create blog post", nil, err)
+		return
+	}
+
+	ctx.Redirect(302, adminRoute)
+}
+
 func (r *Router) HandleError(ctx *gin.Context, message string, fn func(ctx *gin.Context), err error) {
-	uuid := uuid.New().String()
+	toastId := uuid.New().String()
 
 	hxRequest, exists := ctx.Get("isHXRequest")
 	if exists && hxRequest.(bool) {
 		ctx.Header("HX-Retarget", "#toastContainer")
 		ctx.Header("HX-Reswap", "beforeend")
 		ctx.HTML(200, "toast", gin.H{
-			"toastId": "toast-" + uuid,
+			"toastId": "toast-" + toastId,
 			"toast":   message,
 		})
 		return
