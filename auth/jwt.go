@@ -2,7 +2,9 @@ package auth
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"net/http"
 	"os"
 )
 
@@ -14,6 +16,49 @@ type JwtPayload struct {
 
 type JwtRefreshPayload struct {
 	JwtToken string `json:"jwtToken"`
+}
+
+func ExtractAuth(ctx *gin.Context) (jwtPayload *JwtPayload, err error) {
+	jwtCookie, err := ctx.Request.Cookie("token")
+	if err != nil {
+		jwtPayload, err = refreshTokens(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	jwtPayload, err = VerifyJwtToken(jwtCookie.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return jwtPayload, nil
+}
+
+func AddAuthCookies(ctx *gin.Context, jwtToken string, refreshToken string) {
+	jwtCookie := http.Cookie{
+		Name:     "token",
+		Value:    jwtToken,
+		Path:     "/",
+		Domain:   "",
+		MaxAge:   60,
+		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+		HttpOnly: true,
+	}
+	http.SetCookie(ctx.Writer, &jwtCookie)
+
+	refreshCookie := http.Cookie{
+		Name:     "refreshToken",
+		Value:    jwtToken,
+		Path:     "/",
+		Domain:   "",
+		MaxAge:   60 * 60 * 3,
+		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+		HttpOnly: true,
+	}
+	http.SetCookie(ctx.Writer, &refreshCookie)
 }
 
 func VerifyRefreshToken(token string) (payload *JwtRefreshPayload, err error) {
@@ -68,7 +113,7 @@ func verifyRefreshToken(token string, jwtSecret []byte) (payload *JwtRefreshPayl
 
 	if _, ok := jwtToken.Claims.(jwt.MapClaims); ok && jwtToken.Valid {
 		payload = &JwtRefreshPayload{
-			JwtToken: jwtToken.Claims.(jwt.MapClaims)["jwtToken"].(string),
+			JwtToken: token,
 		}
 		return payload, nil
 	}
@@ -76,7 +121,7 @@ func verifyRefreshToken(token string, jwtSecret []byte) (payload *JwtRefreshPayl
 	return nil, fmt.Errorf("invalid token")
 }
 
-func GenerateTokens(payload JwtPayload) (token string, refreshToken string, err error) {
+func GenerateTokens(payload *JwtPayload) (token string, refreshToken string, err error) {
 	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
 
 	token, err = generateJwtToken(payload, jwtSecret)
@@ -102,7 +147,7 @@ func generateRefreshToken(payload JwtRefreshPayload, jwtSecret []byte) (string, 
 	return tokenString, err
 }
 
-func generateJwtToken(payload JwtPayload, jwtSecret []byte) (string, error) {
+func generateJwtToken(payload *JwtPayload, jwtSecret []byte) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["username"] = payload.Username
 	claims["admin"] = payload.Admin
@@ -112,4 +157,30 @@ func generateJwtToken(payload JwtPayload, jwtSecret []byte) (string, error) {
 
 	tokenString, err := token.SignedString(jwtSecret)
 	return tokenString, err
+}
+
+func refreshTokens(ctx *gin.Context) (jwtPayload *JwtPayload, err error) {
+	refreshCookie, err := ctx.Request.Cookie("refreshToken")
+	if err != nil {
+		return nil, err
+	}
+
+	refreshPayload, err := VerifyRefreshToken(refreshCookie.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	jwtPayload, err = VerifyJwtToken(refreshPayload.JwtToken)
+	if err != nil {
+		return nil, err
+	}
+
+	jwtToken, refreshToken, err := GenerateTokens(jwtPayload)
+	if err != nil {
+		return nil, err
+	}
+
+	AddAuthCookies(ctx, jwtToken, refreshToken)
+
+	return jwtPayload, nil
 }

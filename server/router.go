@@ -129,6 +129,7 @@ func (r *Router) HandleHealth(ctx *gin.Context) {
 func (r *Router) HandleAdminLoginRequest(ctx *gin.Context) {
 	username := ctx.PostForm("username")
 	password := ctx.PostForm("password")
+	redirectPath := ctx.PostForm("redirect")
 
 	var user models.User
 	if err := r.Db.Where("username = ?", username).First(&user).Error; err != nil {
@@ -158,9 +159,18 @@ func (r *Router) HandleAdminLoginRequest(ctx *gin.Context) {
 		return
 	}
 
-	ctx.SetCookie("token", "", 60, "/", "blog.simoni.dev", true, true)
-	ctx.SetCookie("refreshToken", "", 60*60*3, "/", "blog.simoni.dev", true, true)
-	ctx.Redirect(302, adminRoute)
+	err := user.NewAuthTokens(ctx)
+	if err != nil {
+		log.Println("AdminLogin failed to generate tokens:", err)
+		ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
+			"title": "Admin Login",
+			"path":  ctx.Request.URL.Path,
+			"error": "Something went wrong",
+		}))
+		return
+	}
+
+	ctx.Redirect(302, redirectPath)
 }
 
 func (r *Router) HandleAdminDashboard(ctx *gin.Context) {
@@ -169,10 +179,16 @@ func (r *Router) HandleAdminDashboard(ctx *gin.Context) {
 	}))
 }
 
-func HandleAdminLogin(ctx *gin.Context) {
+func (r *Router) HandleAdminLogin(ctx *gin.Context) {
+	redirect := ctx.Request.URL.Query().Get("redirect")
+
+	if redirect == "" {
+		redirect = adminRoute
+	}
+
 	ctx.HTML(200, "adminLogin", addHXRequest(ctx, gin.H{
-		"title": "Admin Login",
-		"path":  ctx.Request.URL.Path,
+		"title":    "Admin Login",
+		"redirect": redirect,
 	}))
 }
 

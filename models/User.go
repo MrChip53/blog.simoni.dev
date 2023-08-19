@@ -2,6 +2,7 @@ package models
 
 import (
 	"blog.simoni.dev/auth"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -18,4 +19,18 @@ func (u *User) IsAdmin() bool {
 
 func (u *User) VerifyPassword(password string) (bool, error) {
 	return auth.VerifyPassword(password, u.Password)
+}
+
+func (u *User) NewAuthTokens(ctx *gin.Context) error {
+	jwtToken, refreshToken, err := auth.GenerateTokens(&auth.JwtPayload{
+		Username: u.Username,
+		Admin:    u.Admin,
+		UserId:   u.ID,
+	})
+	if err != nil {
+		return err
+	}
+
+	auth.AddAuthCookies(ctx, jwtToken, refreshToken)
+	return nil
 }
