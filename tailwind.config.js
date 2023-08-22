@@ -5,8 +5,14 @@ module.exports = {
     ],
     theme: {
         extend: {
+            colors: {
+                'background': '#2b2b2b',
+                'primary':  '#48e596',
+                'secondary': '#134e27',
+                'accent': '#ffa348',
+            },
             fontFamily: {
-                sans: ['"VT323"', 'monospace']
+                sans: ['"Inter"', 'monospace']
             },
         },
     },
@@ -16,4 +22,3 @@ module.exports = {
         }
     ],
 }
-

@@ -1,0 +1,109 @@
+{{ define "content" }}
+<div class="flex md:flex-row flex-col m-10 gap-5">
+    <nav class="flex">
+        <div class="flex flex-col gap-4">
+            <h1 class="text-4xl tracking-tight font-bold text-primary sm:text-5xl">Chris Simoni</h1>
+            <h2>Software Engineer</h2>
+            <p>
+                I like to create things.
+            </p>
+            <div class="flex text-accent">
+                <a target="_blank" href="https://github.com/mrchip53">
+                    <svg aria-hidden="true" class="h-6 w-6" fill="currentColor" viewBox="0 0 16 16"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                    </svg>
+                </a>
+                <a target="_blank" href="https://linkedin.com/in/chris-simoni/">
+                    <svg aria-hidden="true" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19a.66.66 0 000 .14V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66z"></path>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </nav>
+    <main class="flex flex-col">
+        <section>
+            <h1 class="text-sm text-primary font-bold uppercase">About</h1>
+            <p>
+                I'm a full stack developer, a member of the Jellyfin
+                Organization and a member of the SOCOM Cafe team.
+                Lately, I've been working on Mesocast developing
+                backend services for it in Golang and helping architect
+                the overall product.
+            </p>
+        </section>
+        <section>
+            <h2 class="text-sm text-primary font-bold uppercase">Projects</h2>
+
+            <div class="flex sm:items-center md:justify-center gap-4 sm:flex-col md:flex-row">
+                <div class="relative shadow-md rounded-lg max-w-sm">
+                    <a target="_blank" href="https://mesocast.net">
+                        <img class="rounded-t-lg" src="https://simoni.dev/assets/mesocast.png" alt="Screenshot of Mesocast">
+                    </a>
+                    <div class="p-5">
+                        <a target="_blank" href="https://mesocast.net">
+                            <h5 class="text-gray-900 font-bold text-2xl tracking-tight mb-2 dark:text-white">Mesocast</h5>
+                        </a>
+                        <h6>Co-founder / Software Engineer</h6>
+                        <p class="font-normal text-gray-700 mb-3 dark:text-gray-400">Mesocast is a weather forecasting application built with weather enthusiasts, meteorologists, and scientists in mind.</p>
+                        <a target="_blank" href="https://mesocast.net" class="text-white bg-accent hover:bg-accent focus:ring-4 font-medium rounded-lg text-sm px-3 py-2 text-center inline-flex items-center focus:ring-primary">
+                            See it in action
+                            <svg class="-mr-1 ml-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                        </a>
+                        <!-- <a href="#" class="text-white bg-accent hover:opacity-90 focus:ring-4 font-medium rounded-lg text-sm px-3 py-2 text-center inline-flex items-center focus:ring-primary">
+                            Read more
+                            <svg class="-mr-1 ml-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                        </a> -->
+                    </div>
+                    <div class="bg-primary opacity-10 absolute h-full w-full rounded-lg -z-10 top-0 left-0"></div>
+                </div>
+
+                <div class="relative shadow-md rounded-lg max-w-sm">
+                    <div class="flex justify-center">
+                        <a target="_blank" href="https://jellyfin.org">
+                            <img class="rounded-t-lg max-h-32" src="https://simoni.dev/assets/icon-transparent.png" alt="Jellyfin Logo">
+                        </a>
+                    </div>
+                    <div class="p-5">
+                        <a target="_blank" href="https://jellyfin.org">
+                            <h5 class="text-gray-900 font-bold text-2xl tracking-tight mb-2 dark:text-white">Jellyfin</h5>
+                        </a>
+                        <h6>Android TV Client Developer</h6>
+                        <p class="font-normal text-gray-700 mb-3 dark:text-gray-400">Jellyfin is the volunteer-built media solution that puts you in control of your media. Stream to any device from your own server, with no strings attached. Your media, your server, your way.</p>
+                        <a target="_blank" href="https://jellyfin.org" class="text-white bg-accent hover:bg-accent focus:ring-4 font-medium rounded-lg text-sm px-3 py-2 text-center inline-flex items-center focus:ring-primary">
+                            View website
+                            <svg class="-mr-1 ml-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                        </a>
+                        <!-- <a href="#" class="text-white bg-accent hover:opacity-90 focus:ring-4 font-medium rounded-lg text-sm px-3 py-2 text-center inline-flex items-center focus:ring-primary">
+                            Read more
+                            <svg class="-mr-1 ml-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                        </a> -->
+                    </div>
+                    <div class="bg-primary opacity-10 absolute h-full w-full rounded-lg -z-10 top-0 left-0"></div>
+                </div>
+            </div>
+
+        </section>
+        <section>
+            <h2 class="text-sm text-primary font-bold uppercase">Skills</h2>
+            <h3>
+                Languages
+            </h3>
+            <p>
+                Go, C, C++, C#, HTML5, CSS3, JavaScript, TypeScript, Java, Kotlin, PHP, Python, SQL
+            </p>
+            <h3>
+                Frameworks / Libraries
+            </h3>
+            <p>
+                React Native, Expo SDK, React, .NET Core, MAUI, Bootstrap 5, MobX, HTMX
+            </p>
+        </section>
+        <section>
+            <h2 class="text-sm text-primary font-bold uppercase">Contact</h2>
+        </section>
+    </main>
+</div>
+{{ end }}

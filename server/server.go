@@ -29,8 +29,11 @@ func NewServer(db *gorm.DB) (*gin.Engine, error) {
 
 	engine.NoRoute(router.HandleNotFound)
 
-	// Regular pages
+	// Shared
 	engine.GET("/", router.HandleIndex)
+
+	// Blog
+	// Regular pages
 	engine.GET("/post/:month/:day/:year/:slug", router.HandlePost)
 	engine.GET("/tag/:tag", router.HandleTag)
 

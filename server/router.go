@@ -31,6 +31,9 @@ func createRenderer(templatePath string) multitemplate.Renderer {
 
 	r := multitemplate.NewRenderer()
 
+	// Portfolio Index
+	r.AddFromFilesFuncs("portfolioIndex", funcMap, path.Join(templatePath, "portfolio/base.html"), path.Join(templatePath, "portfolio/index.html"))
+
 	// Regular pages
 	r.AddFromFilesFuncs("index", funcMap, basePath, path.Join(templatePath, "index.html"))
 	r.AddFromFilesFuncs("post", funcMap, basePath, path.Join(templatePath, "post.html"))
@@ -55,6 +58,11 @@ func NewRouter(db *gorm.DB) *Router {
 }
 
 func (r *Router) HandleIndex(ctx *gin.Context) {
+	if ctx.Request.Host != "simoni.dev" {
+		ctx.HTML(200, "portfolioIndex", gin.H{})
+		return
+	}
+
 	var posts []models.BlogPost
 	if err := r.Db.Preload("Tags").Order("created_at DESC").Limit(10).Find(&posts).Error; err != nil {
 		log.Println("Index failed to get posts:", err)
