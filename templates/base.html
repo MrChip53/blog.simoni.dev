@@ -8,7 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <!-- <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet"> -->
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/main.css">
   <script src="/js/hyperscript.min.js"></script>
   <script src="/js/htmx.min.js"></script>
@@ -47,7 +48,7 @@
         <div id="bar3" class="my-1 h-1 w-6 bg-white rounded-full transition-transform duration-300"></div>
       </label>
 
-      <div id="navbar" class="flex md:basis-auto basis-full flex-grow-[1] items-center collapsed">
+      <div id="navbar" class="flex md:basis-auto basis-full flex-grow-[1] items-center collapsed md:!block">
         <ul class="flex flex-col pl-0 mb-0 list-none mt-2 me-auto md:flex-row">
           <li
                   class="flex pt-1 mr-6 md:hover:text-purple-600 active:text-purple-600 md:hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
@@ -66,7 +67,6 @@
       </div>
     </div>
   </nav>
-
   <div id="main-container" class="flex flex-col gap-10 w-full items-center my-10" hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms show:window:top">
     {{ end }}
 

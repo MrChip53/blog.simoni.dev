@@ -6,6 +6,18 @@
     @apply text-white;
 }
 
+h1 {
+    @apply text-4xl;
+}
+
+h2 {
+    @apply text-3xl;
+}
+
+h3 {
+    @apply text-2xl;
+}
+
 .htmx-swapping {
     opacity: 0;
     transition: opacity 300ms ease-out;
@@ -46,4 +58,65 @@
 
 .fade-in {
     opacity: 1 !important;
+}
+
+/*
+ Blog Post Styles Start
+ */
+
+.post-body {
+    @apply text-lg;
+}
+
+.post-body h1 {
+    @apply underline;
+}
+
+.post-body h2 {
+    @apply underline;
+    @apply mt-6;
+}
+
+.post-body h3 {
+}
+
+.post-body h2, .post-body p, .post-body ul, .post-body ol,
+.post-body pre, .post-body blockquote {
+    @apply mb-4;
+}
+
+.post-body code {
+    @apply bg-neutral-700;
+    @apply text-white;
+}
+
+.post-body pre {
+    @apply bg-neutral-700;
+    @apply p-2;
+    @apply rounded;
+    @apply border-neutral-400;
+    @apply border;
+}
+
+.post-body a {
+    @apply underline;
+}
+
+.post-body ol {
+    @apply list-decimal;
+}
+
+.post-body ul {
+    @apply list-disc;
+}
+
+.post-body ol, .post-body ul {
+    @apply pl-8;
+}
+
+.post-body blockquote {
+    @apply border-s-4;
+    @apply border-neutral-700;
+    @apply ps-3;
+    @apply text-slate-500;
 }

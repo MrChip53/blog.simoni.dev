@@ -84,9 +84,12 @@ func (r *Router) HandlePost(ctx *gin.Context) {
 		return
 	}
 
+	postHtml := parseMarkdown([]byte(post.Content))
+
 	ctx.HTML(200, "post", addGenerics(ctx, gin.H{
-		"title": post.Title,
-		"post":  post,
+		"title":       post.Title,
+		"post":        post,
+		"contentHtml": template.HTML(postHtml),
 	}))
 }
 
@@ -202,6 +205,17 @@ func (r *Router) HandleAdminDashboard(ctx *gin.Context) {
 		"title":    "Admin Dashboard",
 		"username": claims.Username,
 	}))
+}
+
+func (r *Router) HandleAdminGenerateMarkdown(ctx *gin.Context) {
+	claims := ctx.MustGet("authToken").(*auth.JwtPayload)
+	if claims == nil {
+		ctx.Abort()
+		return
+	}
+	md := ctx.PostForm("content")
+	htmlBytes := parseMarkdown([]byte(md))
+	ctx.String(200, string(htmlBytes))
 }
 
 func (r *Router) HandleAdminLogin(ctx *gin.Context) {

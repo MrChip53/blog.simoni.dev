@@ -32,6 +32,7 @@ func main() {
 		&gorm.Config{
 			DisableForeignKeyConstraintWhenMigrating: true,
 		})
+
 	if err != nil {
 		log.Fatal("failed to open db connection ", err)
 	}

@@ -3,6 +3,9 @@ package server
 import (
 	"blog.simoni.dev/models"
 	"fmt"
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
 	"time"
 )
 
@@ -23,6 +26,18 @@ func formatAsDateTime(t time.Time) string {
 	timeString := chicagoTime.Format(timeFormat)
 
 	return timeString
+}
+
+func parseMarkdown(md []byte) []byte {
+	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
+	p := parser.NewWithExtensions(extensions)
+	doc := p.Parse(md)
+
+	htmlFlags := html.CommonFlags | html.HrefTargetBlank
+	opts := html.RendererOptions{Flags: htmlFlags}
+	renderer := html.NewRenderer(opts)
+
+	return markdown.Render(doc, renderer)
 }
 
 func getSlug(post models.BlogPost) string {

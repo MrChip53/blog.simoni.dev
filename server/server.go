@@ -43,6 +43,9 @@ func NewServer(db *gorm.DB) (*gin.Engine, error) {
 	engine.POST(adminRoute+"/login", router.HandleAdminLoginRequest)
 	engine.POST(adminRoute+"/new-post", router.HandleAdminNewBlogPostRequest)
 
+	// Authed utility endpoints
+	engine.POST(adminRoute+"/generate-markdown", router.HandleAdminGenerateMarkdown)
+
 	engine.DELETE(adminRoute+"/post/:id", router.HandleAdminPostsDelete)
 
 	engine.GET("/hp", router.HandleHealth)

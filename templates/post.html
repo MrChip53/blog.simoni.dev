@@ -1,13 +1,13 @@
 {{ define "content" }}
     <section class="md:w-1/2 w-5/6">
-        <h1 class="text-4xl mb-4">
+        <h1 class="mb-4">
             {{ .post.Title }}
         </h1>
-        <h2 class="mb-6 text-gray-400 text-xl">
+        <h2 class="mb-6 text-gray-400">
             @{{ .post.Author }}
         </h2>
-        <div class="mb-4 text-2xl">
-            {{ .post.Content }}
+        <div class="mb-4 post-body">
+            {{ .contentHtml }}
         </div>
         <div class="flex gap-4 text-xl">
                             <span class="text-gray-400">
