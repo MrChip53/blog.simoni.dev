@@ -96,6 +96,7 @@ h3 {
     @apply rounded;
     @apply border-neutral-400;
     @apply border;
+    @apply overflow-x-auto;
 }
 
 .post-body a {
