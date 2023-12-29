@@ -13,9 +13,10 @@
   <link rel="stylesheet" href="/css/main.css">
   <script src="/js/hyperscript.min.js"></script>
   <script src="/js/htmx.min.js"></script>
+  <script src="/js/htmx.title.js"></script>
 </head>
 
-<body class="bg-neutral-900 text-white">
+<body hx-ext="title" class="bg-neutral-900 text-white">
   <nav class="flex align-center py-3 px-4 sticky top-0 bg-neutral-800 z-50 md:flex-nowrap flex-wrap md:justify-start">
     <div hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms show:window:top"
          class="flex md:flex-nowrap flex-wrap items-center justify-between w-full mr-auto ml-auto">

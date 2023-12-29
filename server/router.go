@@ -63,6 +63,8 @@ func (r *Router) HandleIndex(ctx *gin.Context) {
 		return
 	}
 
+	ctx.Header("HX-Title", "mrchip53's blog")
+
 	ctx.HTML(200, "index", addGenerics(ctx, gin.H{
 		"title":   "mrchip53's blog",
 		"posts":   posts,
@@ -78,6 +80,8 @@ func (r *Router) HandleUser(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
+
+	ctx.Header("HX-Title", username+"'s Page")
 
 	ctx.HTML(200, "index", addGenerics(ctx, gin.H{
 		"title":   username + "'s Page",
@@ -102,6 +106,8 @@ func (r *Router) HandlePost(ctx *gin.Context) {
 	}
 
 	postHtml := parseMarkdown([]byte(post.Content))
+
+	ctx.Header("HX-Title", post.Title)
 
 	ctx.HTML(200, "post", addGenerics(ctx, gin.H{
 		"title":       post.Title,
@@ -129,6 +135,8 @@ func (r *Router) HandleTag(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
+
+	ctx.Header("HX-Title", "Posts tagged with "+tag)
 
 	ctx.HTML(200, "index", addGenerics(ctx, gin.H{
 		"title":   fmt.Sprintf("Posts tagged with %s", tag),
