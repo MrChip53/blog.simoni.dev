@@ -57,7 +57,7 @@ func NewRenderer() *mdhtml.Renderer {
 		}
 	}
 	if highlightStyle == nil {
-		styleName := "dracula"
+		styleName := "monokai"
 		highlightStyle = styles.Get(styleName)
 		if highlightStyle == nil {
 			panic("couldn't get highlight style")
