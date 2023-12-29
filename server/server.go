@@ -40,7 +40,9 @@ func NewServer(db *gorm.DB) (*gin.Engine, error) {
 	engine.GET(adminRoute+"/login", router.HandleAdminLogin)
 	engine.GET(adminRoute+"/new-post", router.HandleAdminNewBlogPost)
 	engine.GET(adminRoute+"/posts", router.HandleAdminPosts)
+	engine.GET(adminRoute+"/edit/:postId", router.HandlePostEdit)
 
+	engine.POST(adminRoute+"/edit/:postId", router.PostPostEdit)
 	engine.POST(adminRoute+"/login", router.HandleAdminLoginRequest)
 	engine.POST(adminRoute+"/new-post", router.HandleAdminNewBlogPostRequest)
 

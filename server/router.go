@@ -41,6 +41,7 @@ func createRenderer(templatePath string) multitemplate.Renderer {
 	r.AddFromFilesFuncs("adminDashboard", funcMap, basePath, path.Join(templatePath, "admin/dashboard.html"))
 	r.AddFromFilesFuncs("adminLogin", funcMap, basePath, path.Join(templatePath, "admin/login.html"))
 	r.AddFromFilesFuncs("adminNewPost", funcMap, basePath, path.Join(templatePath, "admin/new-post.html"))
+	r.AddFromFilesFuncs("postEdit", funcMap, basePath, path.Join(templatePath, "admin/edit.html"))
 
 	// Components
 	r.AddFromFilesFuncs("toast", funcMap, path.Join(templatePath, "components/toast.html"))
@@ -114,6 +115,53 @@ func (r *Router) HandlePost(ctx *gin.Context) {
 		"post":        post,
 		"contentHtml": template.HTML(postHtml),
 	}))
+}
+
+func (r *Router) HandlePostEdit(ctx *gin.Context) {
+	postId := ctx.Param("postId")
+
+	var post models.BlogPost
+	if err := r.Db.Preload("Tags").Where("id = ?", postId).First(&post).Error; err != nil {
+		log.Println("Index failed to get posts:", err)
+		ctx.HTML(404, "notFound", addGenerics(ctx, gin.H{
+			"title": "Content Not Found",
+		}))
+		return
+	}
+
+	postHtml := parseMarkdown([]byte(post.Content))
+
+	ctx.Header("HX-Title", "Editing "+post.Title)
+
+	ctx.HTML(200, "postEdit", addGenerics(ctx, gin.H{
+		"title":       post.Title,
+		"post":        post,
+		"contentHtml": template.HTML(postHtml),
+	}))
+}
+
+func (r *Router) PostPostEdit(ctx *gin.Context) {
+	postId := ctx.Param("postId")
+
+	content := ctx.PostForm("content")
+
+	if len(content) == 0 {
+		r.HandleError(ctx, "Just delete the post instead.", nil, nil)
+		return
+	}
+
+	err := r.Db.Model(&models.BlogPost{}).Where("id = ?", postId).Update("content", strings.TrimSpace(content)).Error
+	if err != nil {
+		r.HandleError(ctx, "Failed to update post.", nil, err)
+		return
+	}
+	var post models.BlogPost
+	if err = r.Db.Where("id = ?", postId).First(&post).Error; err != nil {
+		r.HandleError(ctx, "Failed to load new content.", nil, err)
+		return
+	}
+	location := fmt.Sprintf("{ \"path\": \"/post/%d/%d/%d/%s\", \"target\":\"#main-container\"}", post.CreatedAt.Month(), post.CreatedAt.Day(), post.CreatedAt.Year(), post.Slug)
+	ctx.Header("HX-Location", location)
 }
 
 func (r *Router) HandleTag(ctx *gin.Context) {
@@ -239,7 +287,7 @@ func (r *Router) HandleAdminGenerateMarkdown(ctx *gin.Context) {
 		return
 	}
 	md := ctx.PostForm("content")
-	htmlBytes := parseMarkdown([]byte(md))
+	htmlBytes := parseMarkdown([]byte(strings.TrimSpace(md)))
 	ctx.String(200, string(htmlBytes))
 }
 
@@ -277,7 +325,7 @@ func (r *Router) HandleAdminNewBlogPostRequest(ctx *gin.Context) {
 	author := jwt.(*auth.JwtPayload).Username
 
 	tx := r.Db.Begin()
-	newPost, err := models.NewBlogPost(tx, title, author, slug, content, description)
+	newPost, err := models.NewBlogPost(tx, title, author, slug, strings.TrimSpace(content), description)
 	if err != nil {
 		tx.Rollback()
 		r.HandleError(ctx, "Failed to create blog post", nil, err)
@@ -384,5 +432,6 @@ func addGenerics(ctx *gin.Context, h gin.H) gin.H {
 	hxRequest, exists := ctx.Get("isHXRequest")
 	h["isHXRequest"] = exists && hxRequest.(bool)
 	h["adminRoute"] = adminRoute
+	h["authToken"], h["authed"] = ctx.Get("authToken")
 	return h
 }
