@@ -35,6 +35,8 @@ func NewServer(db *gorm.DB) (*gin.Engine, error) {
 	engine.GET("/tag/:tag", router.HandleTag)
 	engine.GET("/user/:username", router.HandleUser)
 
+	engine.POST("/comment/:postId", router.HandleComment)
+
 	// Admin pages
 	engine.GET(adminRoute, router.HandleAdminDashboard)
 	engine.GET(adminRoute+"/login", router.HandleAdminLogin)

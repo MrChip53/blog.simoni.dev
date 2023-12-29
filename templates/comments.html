@@ -1,0 +1,17 @@
+{{ define "content" }}
+    {{ if not .comments }}
+        This post has no comments. Be the first!
+    {{ else }}
+        {{ range .comments }}
+            <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-2">
+                    <span class="text-lg font-semibold">{{ .Author }}</span>
+                    <span>{{ .Comment }}</span>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <span class="text-gray-400">{{ .CreatedAt | formatAsDateTime }}</span>
+                </div>
+            </div>
+        {{ end }}
+    {{ end }}
+{{ end }}

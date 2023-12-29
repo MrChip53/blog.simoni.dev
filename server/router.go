@@ -35,6 +35,7 @@ func createRenderer(templatePath string) multitemplate.Renderer {
 	// Regular pages
 	r.AddFromFilesFuncs("index", funcMap, basePath, path.Join(templatePath, "index.html"))
 	r.AddFromFilesFuncs("post", funcMap, basePath, path.Join(templatePath, "post.html"))
+	r.AddFromFilesFuncs("comments", funcMap, basePath, path.Join(templatePath, "comments.html"))
 
 	// Admin pages
 
@@ -91,6 +92,50 @@ func (r *Router) HandleUser(ctx *gin.Context) {
 	}))
 }
 
+func (r *Router) HandleComment(ctx *gin.Context) {
+	if t, ok := ctx.Get("authToken"); !ok || t == nil {
+		r.HandleError(ctx, "You must be logged in to comment", nil, nil)
+		return
+	}
+
+	postId := ctx.Param("postId")
+	author := ctx.PostForm("Username")
+	comment := ctx.PostForm("comment")
+
+	if len(comment) == 0 || len(author) == 0 {
+		r.HandleError(ctx, "Author and comment cannot be empty", nil, nil)
+		return
+	}
+
+	err := r.Db.Transaction(func(tx *gorm.DB) error {
+		var blogPost models.BlogPost
+		if err := tx.First(&blogPost, postId).Error; err != nil {
+			return err
+		}
+
+		err := tx.Create(&models.Comment{
+			BlogPostId: blogPost.ID,
+			Author:     author,
+			Comment:    comment,
+		}).Error
+		return err
+	})
+	if err != nil {
+		r.HandleError(ctx, "Failed to create comment", nil, err)
+		return
+	}
+
+	var comments []models.Comment
+	r.Db.Where("blog_post_id = ?", postId).Order("created_at DESC").Find(&comments)
+
+	ctx.Header("HX-Retarget", "#comments-"+postId)
+	ctx.Header("HX-Reswap", "innerHTML")
+
+	ctx.HTML(200, "comments", addGenerics(ctx, gin.H{
+		"comments": comments,
+	}))
+}
+
 func (r *Router) HandlePost(ctx *gin.Context) {
 	month := ctx.Param("month")
 	day := ctx.Param("day")
@@ -106,6 +151,9 @@ func (r *Router) HandlePost(ctx *gin.Context) {
 		return
 	}
 
+	var comments []models.Comment
+	r.Db.Where("blog_post_id = ?", post.ID).Order("created_at DESC").Find(&comments)
+
 	postHtml := parseMarkdown([]byte(post.Content))
 
 	ctx.Header("HX-Title", post.Title)
@@ -113,6 +161,7 @@ func (r *Router) HandlePost(ctx *gin.Context) {
 	ctx.HTML(200, "post", addGenerics(ctx, gin.H{
 		"title":       post.Title,
 		"post":        post,
+		"comments":    comments,
 		"contentHtml": template.HTML(postHtml),
 	}))
 }

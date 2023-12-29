@@ -37,7 +37,7 @@ func main() {
 		log.Fatal("failed to open db connection ", err)
 	}
 
-	err = db.AutoMigrate(&models.BlogPost{}, &models.Tag{}, &models.User{})
+	err = db.AutoMigrate(&models.BlogPost{}, &models.Tag{}, &models.User{}, &models.Comment{})
 	if err != nil {
 		log.Fatal("failed to migrate db: ", err)
 	}

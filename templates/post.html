@@ -28,5 +28,40 @@
                 </a>
                 {{ end }}
         </div>
+        <hr class="my-4" />
+        <div class="flex flex-col">
+            <div>
+                <form hx-boost="true" action="/comment/{{ .post.ID}}" hx-push-url="false" method="POST" class="flex flex-col gap-4">
+                    <div class="flex flex-col gap-2">
+                        <label for="Username" class="text-lg font-semibold">Username</label>
+                        <input type="text" name="Username" id="Username" class="border border-gray-300 rounded-md p-2 text-black" required>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label for="comment" class="text-lg font-semibold">Comment</label>
+                        <textarea name="comment" id="comment" cols="30" rows="5" class="border border-gray-300 rounded-md p-2 text-black" required></textarea>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <button type="submit" class="bg-purple-600 text-white rounded-md p-2">Post Comment</button>
+                    </div>
+                </form>
+            </div>
+            <div id="comments-{{ .post.ID }}">
+                {{ if not .comments }}
+                    This post has no comments. Be the first!
+                {{ else }}
+                    {{ range .comments }}
+                    <div class="flex flex-col gap-4">
+                        <div class="flex flex-col gap-2">
+                            <span class="text-lg font-semibold">{{ .Author }}</span>
+                            <span>{{ .Comment }}</span>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <span class="text-gray-400">{{ .CreatedAt | formatAsDateTime }}</span>
+                        </div>
+                    </div>
+                    {{ end }}
+                {{ end }}
+            </div>
+        </div>
     </section>
 {{ end }}
