@@ -1,10 +1,10 @@
 package server
 
 import (
+	"blog.simoni.dev/md"
 	"blog.simoni.dev/models"
 	"fmt"
 	"github.com/gomarkdown/markdown"
-	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
 	"time"
 )
@@ -28,14 +28,12 @@ func formatAsDateTime(t time.Time) string {
 	return timeString
 }
 
-func parseMarkdown(md []byte) []byte {
+func parseMarkdown(bytes []byte) []byte {
 	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
 	p := parser.NewWithExtensions(extensions)
-	doc := p.Parse(md)
+	doc := p.Parse(bytes)
 
-	htmlFlags := html.CommonFlags | html.HrefTargetBlank
-	opts := html.RendererOptions{Flags: htmlFlags}
-	renderer := html.NewRenderer(opts)
+	renderer := md.NewRenderer()
 
 	return markdown.Render(doc, renderer)
 }
