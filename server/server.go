@@ -33,6 +33,7 @@ func NewServer(db *gorm.DB) (*gin.Engine, error) {
 	engine.GET("/", router.HandleIndex)
 	engine.GET("/post/:month/:day/:year/:slug", router.HandlePost)
 	engine.GET("/tag/:tag", router.HandleTag)
+	engine.GET("/user/:username", router.HandleUser)
 
 	// Admin pages
 	engine.GET(adminRoute, router.HandleAdminDashboard)

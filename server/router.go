@@ -3,6 +3,7 @@ package server
 import (
 	"blog.simoni.dev/auth"
 	"blog.simoni.dev/models"
+	"errors"
 	"fmt"
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
@@ -64,6 +65,22 @@ func (r *Router) HandleIndex(ctx *gin.Context) {
 
 	ctx.HTML(200, "index", addGenerics(ctx, gin.H{
 		"title":   "mrchip53's blog",
+		"posts":   posts,
+		"noPosts": len(posts) == 0,
+	}))
+}
+
+func (r *Router) HandleUser(ctx *gin.Context) {
+	username := ctx.Param("username")
+	var posts []models.BlogPost
+	if err := r.Db.Preload("Tags").Where("author = ?", username).Order("created_at DESC").Find(&posts).Error; err != nil {
+		log.Println("Index failed to get posts:", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	ctx.HTML(200, "index", addGenerics(ctx, gin.H{
+		"title":   username + "'s Page",
 		"posts":   posts,
 		"noPosts": len(posts) == 0,
 	}))
@@ -262,7 +279,7 @@ func (r *Router) HandleAdminNewBlogPostRequest(ctx *gin.Context) {
 	for _, tag := range tags {
 		tagModel, err := models.GetTag(tx, tag)
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
 				tagModel, err = models.NewTag(tx, tag)
 				if err != nil {
 					tx.Rollback()
