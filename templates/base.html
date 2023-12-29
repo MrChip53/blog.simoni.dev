@@ -48,20 +48,21 @@
         <div id="bar3" class="my-1 h-1 w-6 bg-white rounded-full transition-transform duration-300"></div>
       </label>
 
-      <div id="navbar" class="flex md:basis-auto basis-full flex-grow-[1] items-center collapsed md:!block">
-        <ul class="flex flex-col pl-0 mb-0 list-none mt-2 me-auto md:flex-row">
+      <!-- Mobile Nav -->
+      <div id="navbar" class="flex md:basis-auto basis-full flex-grow-[1] items-center collapsed md:!h-auto md:!flex">
+        <ul class="flex flex-col pl-0 mb-0 list-none mt-2 md:mt-0 me-auto md:flex-row">
           <li
                   class="flex pt-1 mr-6 md:hover:text-purple-600 active:text-purple-600 md:hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
-            <a class="flex py-4 items-center static text-2xl no-highlights" href="/">Home</a>
+            <a class="flex py-4 md:py-0 items-center static text-2xl no-highlights" href="/">Home</a>
           </li>
           <li
                   hx-boost="false"
                   class="flex pt-1 mr-6 md:hover:text-purple-600 active:text-purple-600 md:hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
-            <a class="flex py-4 items-center static text-2xl no-highlights" href="https://simoni.dev/">Portfolio</a>
+            <a class="flex py-4 md:py-0 items-center static text-2xl no-highlights" href="https://simoni.dev/">Portfolio</a>
           </li>
           <li
                   class="hidden flex pt-1 mr-6 hover:text-purple-600 hover:border-b-purple-600 border-b-2 border-b-transparent transition-all">
-            <a class="flex py-4 items-center static text-2xl" href="login.html">Log in</a>
+            <a class="flex py-4 md:py-0 items-center static text-2xl" href="login.html">Log in</a>
           </li>
         </ul>
       </div>
