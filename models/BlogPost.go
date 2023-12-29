@@ -4,19 +4,21 @@ import "gorm.io/gorm"
 
 type BlogPost struct {
 	gorm.Model
-	Title   string
-	Author  string
-	Slug    string `gorm:"type:varchar(100);unique_index"`
-	Content string `gorm:"type:text"`
-	Tags    []Tag  `gorm:"many2many:blog_post_tags;"`
+	Title       string
+	Author      string
+	Slug        string `gorm:"type:varchar(100);unique_index"`
+	Content     string `gorm:"type:text"`
+	Description string `gorm:"type:varchar(100)"`
+	Tags        []Tag  `gorm:"many2many:blog_post_tags;"`
 }
 
-func NewBlogPost(db *gorm.DB, title string, author string, slug string, content string) (newPost *BlogPost, err error) {
+func NewBlogPost(db *gorm.DB, title string, author string, slug string, content string, description string) (newPost *BlogPost, err error) {
 	newPost = &BlogPost{
-		Title:   title,
-		Slug:    slug,
-		Content: content,
-		Author:  author,
+		Title:       title,
+		Slug:        slug,
+		Content:     content,
+		Author:      author,
+		Description: description,
 	}
 
 	if err := db.Create(newPost).Error; err != nil {

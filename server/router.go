@@ -241,6 +241,7 @@ func (r *Router) HandleAdminNewBlogPostRequest(ctx *gin.Context) {
 	title := ctx.PostForm("title")
 	tags := strings.Split(ctx.PostForm("tags"), ",")
 	content := ctx.PostForm("content")
+	description := ctx.PostForm("description")
 	slug := strings.ReplaceAll(title, " ", "-")
 
 	jwt, exists := ctx.Get("authToken")
@@ -251,7 +252,7 @@ func (r *Router) HandleAdminNewBlogPostRequest(ctx *gin.Context) {
 	author := jwt.(*auth.JwtPayload).Username
 
 	tx := r.Db.Begin()
-	newPost, err := models.NewBlogPost(tx, title, author, slug, content)
+	newPost, err := models.NewBlogPost(tx, title, author, slug, content, description)
 	if err != nil {
 		tx.Rollback()
 		r.HandleError(ctx, "Failed to create blog post", nil, err)
