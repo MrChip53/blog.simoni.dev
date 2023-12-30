@@ -482,5 +482,10 @@ func addGenerics(ctx *gin.Context, h gin.H) gin.H {
 	h["isHXRequest"] = exists && hxRequest.(bool)
 	h["adminRoute"] = adminRoute
 	h["authToken"], h["authed"] = ctx.Get("authToken")
+	var ok bool
+	h["theme"], ok = ctx.Get("theme")
+	if !ok {
+		h["theme"] = "dark"
+	}
 	return h
 }

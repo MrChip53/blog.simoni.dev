@@ -1,0 +1,4 @@
+body {
+    @apply bg-neutral-900;
+    @apply text-white;
+}

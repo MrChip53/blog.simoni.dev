@@ -12,6 +12,7 @@ type JwtPayload struct {
 	Username string `json:"username"`
 	Admin    bool   `json:"admin"`
 	UserId   uint   `json:"userId"`
+	Theme    string `json:"theme"`
 }
 
 type JwtRefreshPayload struct {
@@ -83,6 +84,7 @@ func verifyJwtToken(token string, jwtSecret []byte) (payload *JwtPayload, err er
 			Username: jwtToken.Claims.(jwt.MapClaims)["username"].(string),
 			Admin:    jwtToken.Claims.(jwt.MapClaims)["admin"].(bool),
 			UserId:   uint(jwtToken.Claims.(jwt.MapClaims)["userId"].(float64)),
+			Theme:    jwtToken.Claims.(jwt.MapClaims)["theme"].(string),
 		}
 		return payload, nil
 	}
@@ -144,6 +146,7 @@ func generateJwtToken(payload *JwtPayload, jwtSecret []byte) (string, error) {
 	claims["username"] = payload.Username
 	claims["admin"] = payload.Admin
 	claims["userId"] = payload.UserId
+	claims["theme"] = payload.Theme
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 

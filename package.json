@@ -216,6 +216,7 @@
   },
   "scripts": {
     "build": "npx tailwind build -i ./templates/main.css -o ./css/main.css",
+    "build:themes": "cd templates/themes && find . -name \"*.css\" -exec tailwind -c ../../tailwind.config.js -i {} -o ../../css/themes/{} \\; && cd ../..",
     "dev": "npx tailwind build -i ./templates/main.css -o ./css/main.css --watch"
   },
   "keywords": [],
