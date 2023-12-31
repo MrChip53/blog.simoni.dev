@@ -2,3 +2,5 @@
 /css/main.css
 .env
 /css/themes
+
+*_templ.go

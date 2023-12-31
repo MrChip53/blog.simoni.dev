@@ -3,6 +3,8 @@ package server
 import (
 	"blog.simoni.dev/auth"
 	"blog.simoni.dev/models"
+	"blog.simoni.dev/templates"
+	"context"
 	"errors"
 	"fmt"
 	"github.com/gin-contrib/multitemplate"
@@ -67,11 +69,18 @@ func (r *Router) HandleIndex(ctx *gin.Context) {
 
 	ctx.Header("HX-Title", "mrchip53's blog")
 
-	ctx.HTML(200, "index", addGenerics(ctx, gin.H{
-		"title":   "mrchip53's blog",
-		"posts":   posts,
-		"noPosts": len(posts) == 0,
-	}))
+	//ctx.HTML(200, "index", addGenerics(ctx, gin.H{
+	//	"title":   "mrchip53's blog",
+	//	"posts":   posts,
+	//	"noPosts": len(posts) == 0,
+	//}))
+
+	// Create a context variable that inherits from a parent, and sets the value "test".
+	//ctx := context.WithValue(context.Background(), themeContextKey, "test")
+
+	// Pass the ctx variable to the render function.
+	indexHtml := templates.IndexPage(posts, false)
+	indexHtml.Render(createContext(ctx), ctx.Writer)
 }
 
 func (r *Router) HandleSettings(ctx *gin.Context) {
@@ -486,6 +495,38 @@ func (r *Router) HandleError(ctx *gin.Context, message string, fn func(ctx *gin.
 			"title": "Internal Server Error",
 		})
 	}
+}
+
+func createContext(ctx *gin.Context) context.Context {
+	username, uOk := ctx.Get("username")
+	theme, ok := ctx.Get("theme")
+	_, aOk := ctx.Get("authed")
+	isAdmin, _ := ctx.Get("isAdmin")
+	hxRequest, exists := ctx.Get("isHXRequest")
+	userId, _ := ctx.Get("userId")
+
+	ct := context.WithValue(context.Background(), "isHxRequest", exists && hxRequest.(bool))
+	ct = context.WithValue(ct, "adminRoute", adminRoute)
+	if username != nil {
+		ct = context.WithValue(ct, "username", username.(string))
+	}
+	ct = context.WithValue(ct, "authed", aOk)
+	if isAdmin != nil {
+		ct = context.WithValue(ct, "isAdmin", isAdmin.(bool))
+	}
+	if userId != nil {
+		ct = context.WithValue(ct, "userId", userId.(uint))
+	}
+	if uOk {
+		ct = context.WithValue(ct, "initials", username.(string)[:2])
+	}
+	if !ok {
+		ct = context.WithValue(ct, "theme", "dark")
+	} else {
+		ct = context.WithValue(ct, "theme", theme.(string))
+	}
+
+	return ct
 }
 
 func addGenerics(ctx *gin.Context, h gin.H) gin.H {

@@ -1,0 +1,55 @@
+package templates
+
+import (
+    "blog.simoni.dev/models"
+)
+
+templ IndexPage(posts []models.BlogPost, canDelete bool) {
+    if isHxRequest(ctx) {
+        @IndexContent(posts, canDelete)
+    } else {
+        @base() {
+            @IndexContent(posts, canDelete)
+        }
+    }
+}
+
+templ IndexContent(posts []models.BlogPost, canDelete bool) {
+    for _, post := range posts {
+        <section class="md:w-1/2 w-5/6">
+            <div class="flex">
+                <h1 class="mb-4">
+                    <a class="hover:underline" href={ GetPostSlug(post) }>{ post.Title }</a>
+                </h1>
+                if canDelete {
+                    <button hx-delete={ GetDeletePostLink(GetAdminRoute(ctx), post.ID) } hx-target="#main-container" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700" aria-label="Delete Post">
+                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                        </svg>
+                    </button>
+                }
+            </div>
+            <h2 class="mb-6 text-gray-400">
+                <a class="hover:underline" href={ GetUserLink(post.Author) }>&commat;{ post.Author }</a>
+            </h2>
+            <div class="mb-4 text-2xl">
+                { post.Description }
+            </div>
+            <div class="flex flex-wrap gap-4 text-xl">
+                <span class="text-gray-400">
+                    { formatAsDateTime(post.CreatedAt) }
+                </span>
+                for _, tag := range post.Tags {
+                    <a class="text-purple-600 hover:underline hover:text-purple-400 transition" href={ GetTagLink(tag.Name) }>
+                        #{ tag.Name }
+                    </a>
+                }
+            </div>
+        </section>
+    }
+    if len(posts) == 0 {
+        <div class="text-4xl">
+            No posts yet!
+        </div>
+    }
+}
