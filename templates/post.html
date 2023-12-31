@@ -29,7 +29,7 @@
                 {{ end }}
         </div>
         <hr class="my-4" />
-        <div class="flex flex-col">
+        <div class="flex flex-col gap-4">
             <div>
                 <form hx-boost="true" action="/comment/{{ .post.ID}}" hx-push-url="false" method="POST" class="flex flex-col gap-4">
                     <div class="flex flex-col gap-2">
@@ -45,20 +45,20 @@
                     </div>
                 </form>
             </div>
-            <div id="comments-{{ .post.ID }}">
+            <div id="comments-{{ .post.ID }}" class="flex flex-col gap-2">
                 {{ if not .comments }}
                     This post has no comments. Be the first!
                 {{ else }}
                     {{ range .comments }}
-                    <div class="flex flex-col gap-4">
-                        <div class="flex flex-col gap-2">
-                            <span class="text-lg font-semibold">{{ .Author }}</span>
-                            <span>{{ .Comment }}</span>
+                        <div id="comment-{{ .ID }}" class="flex flex-col gap-4 bg-neutral-600/20 p-1 rounded-md">
+                            <div class="flex flex-col gap-2">
+                                <span class="text-lg font-semibold">{{ .Author }}</span>
+                                <span>{{ .Comment }}</span>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <span class="text-gray-400">{{ .CreatedAt | formatAsDateTime }}</span>
+                            </div>
                         </div>
-                        <div class="flex flex-col gap-2">
-                            <span class="text-gray-400">{{ .CreatedAt | formatAsDateTime }}</span>
-                        </div>
-                    </div>
                     {{ end }}
                 {{ end }}
             </div>
