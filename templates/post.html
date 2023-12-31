@@ -30,7 +30,9 @@
         </div>
         <hr class="my-4" />
         <div class="flex flex-col gap-4">
+            <h2 id="comments">Comments</h2>
             <div>
+                {{ if .authed }}
                 <form hx-boost="true" action="/comment/{{ .post.ID}}" hx-push-url="false" method="POST" class="flex flex-col gap-4">
                     <div class="flex flex-col gap-2">
                         <label for="Username" class="text-lg font-semibold">Username</label>
@@ -44,6 +46,9 @@
                         <button type="submit" class="bg-purple-600 text-white rounded-md p-2">Post Comment</button>
                     </div>
                 </form>
+                {{ else }}
+                You must be logged in to comment.
+                {{ end }}
             </div>
             <div id="comments-{{ .post.ID }}" class="flex flex-col gap-2">
                 {{ if not .comments }}
