@@ -26,8 +26,11 @@ func ExtractAuth() gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set("authToken", authToken)
+		ctx.Set("authed", true)
 		ctx.Set("theme", authToken.Theme)
+		ctx.Set("isAdmin", authToken.Admin)
+		ctx.Set("username", authToken.Username)
+		ctx.Set("userId", authToken.UserId)
 
 		if ctx.Request.URL.Path == "/admin/login" {
 			ctx.Redirect(302, "/admin")

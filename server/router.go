@@ -74,6 +74,17 @@ func (r *Router) HandleIndex(ctx *gin.Context) {
 	}))
 }
 
+func (r *Router) HandleSettings(ctx *gin.Context) {
+	ctx.Header("HX-Theme", "retro")
+
+	ctx.Header("HX-Retarget", "#toastContainer")
+	ctx.Header("HX-Reswap", "beforeend")
+	ctx.HTML(200, "toast", gin.H{
+		"toastId": "toast-3824892389",
+		"toast":   "Switch theme",
+	})
+}
+
 func (r *Router) HandleUser(ctx *gin.Context) {
 	username := ctx.Param("username")
 	var posts []models.BlogPost
@@ -481,8 +492,14 @@ func addGenerics(ctx *gin.Context, h gin.H) gin.H {
 	hxRequest, exists := ctx.Get("isHXRequest")
 	h["isHXRequest"] = exists && hxRequest.(bool)
 	h["adminRoute"] = adminRoute
-	h["authToken"], h["authed"] = ctx.Get("authToken")
-	var ok bool
+	_, h["authed"] = ctx.Get("authed")
+	h["isAdmin"], _ = ctx.Get("isAdmin")
+	h["userId"], _ = ctx.Get("userId")
+	var ok, uOk bool
+	h["username"], uOk = ctx.Get("username")
+	if uOk {
+		h["initials"] = strings.ToUpper(h["username"].(string)[:2])
+	}
 	h["theme"], ok = ctx.Get("theme")
 	if !ok {
 		h["theme"] = "dark"
