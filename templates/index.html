@@ -21,17 +21,15 @@
             <div class="mb-4 text-2xl">
                 {{ .Description }}
             </div>
-            <div class="flex gap-4 text-xl">
-                        <span class="text-gray-400">
-                            {{ .CreatedAt | formatAsDateTime }}
-                        </span>
-                <div class="flex gap-2">
-                    {{ range .Tags }}
-                    <a class="text-purple-600 hover:underline hover:text-purple-400 transition" href="/tag/{{ .Name }}">
-                        #{{ .Name }}
-                    </a>
-                    {{ end }}
-                </div>
+            <div class="flex flex-wrap gap-4 text-xl">
+                <span class="text-gray-400">
+                    {{ .CreatedAt | formatAsDateTime }}
+                </span>
+                {{ range .Tags }}
+                <a class="text-purple-600 hover:underline hover:text-purple-400 transition" href="/tag/{{ .Name }}">
+                    #{{ .Name }}
+                </a>
+                {{ end }}
             </div>
         </section>
     {{ end }}
