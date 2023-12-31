@@ -79,6 +79,7 @@ func (r *Router) HandleIndex(ctx *gin.Context) {
 	//ctx := context.WithValue(context.Background(), themeContextKey, "test")
 
 	// Pass the ctx variable to the render function.
+	ctx.Status(200)
 	indexHtml := templates.IndexPage(posts, false)
 	indexHtml.Render(createContext(ctx), ctx.Writer)
 }
