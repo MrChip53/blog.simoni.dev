@@ -93,7 +93,7 @@ h3 {
     @apply mb-4;
 }
 
-.post-body code {
+p > code {
     @apply bg-glass;
     @apply rounded-md;
     @apply p-1;
@@ -105,13 +105,6 @@ h3 {
     @apply p-2;
     @apply rounded;
     @apply overflow-x-auto;
-}
-
-.post-body pre code {
-    @apply bg-transparent;
-    @apply p-0;
-    @apply rounded-none;
-    @apply border-0;
 }
 
 .post-body a {
