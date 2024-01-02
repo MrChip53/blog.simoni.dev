@@ -241,11 +241,8 @@ func (r *Router) HandleTag(ctx *gin.Context) {
 
 	ctx.Header("HX-Title", "Posts tagged with "+tag)
 
-	ctx.HTML(200, "index", addGenerics(ctx, gin.H{
-		"title":   fmt.Sprintf("Posts tagged with %s", tag),
-		"posts":   posts,
-		"noPosts": len(posts) == 0,
-	}))
+	indexHtml := templates.IndexPage(posts, false)
+	indexHtml.Render(createContext(ctx, "Posts tagged with "+tag), ctx.Writer)
 }
 
 func (r *Router) HandleNotFound(ctx *gin.Context) {

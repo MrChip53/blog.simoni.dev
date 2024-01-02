@@ -1,0 +1,11 @@
+package components
+
+import (
+    "blog.simoni.dev/models"
+)
+
+templ TagLink(tag models.Tag) {
+    <a class="bg-glass rounded-full hover:underline transition text-sm p-2" href={ templ.SafeURL(tag.GetLink()) }>
+        #{ tag.Name }
+    </a>
+}

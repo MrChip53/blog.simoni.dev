@@ -1,6 +1,8 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Tag struct {
 	gorm.Model
@@ -23,4 +25,8 @@ func GetTag(db *gorm.DB, name string) (tag *Tag, err error) {
 	err = db.First(&tag, "name = ?", name).Error
 
 	return tag, err
+}
+
+func (t *Tag) GetLink() string {
+	return "/tag/" + t.Name
 }

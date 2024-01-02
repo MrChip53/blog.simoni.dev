@@ -1,6 +1,7 @@
 package templates
 
 import (
+    "blog.simoni.dev/templates/components"
     "blog.simoni.dev/models"
 )
 
@@ -34,14 +35,12 @@ templ PostContent(post models.BlogPost, contentHtml string, comments []models.Co
                 @templ.Raw(contentHtml)
             </div>
         </div>
-        <div class="flex flex-wrap gap-4 text-xl">
+        <div class="flex flex-wrap items-center gap-4 text-xl">
                             <span class="text-gray-400">
                                 { formatAsDateTime(post.CreatedAt) }
                             </span>
                 for _, tag := range post.Tags {
-                    <a class="text-purple-600 hover:underline hover:text-purple-400 transition" href={ GetTagLink(tag.Name) }>
-                        #{ tag.Name }
-                    </a>
+                    @components.TagLink(tag)
                 }
         </div>
         <hr class="my-4" />
