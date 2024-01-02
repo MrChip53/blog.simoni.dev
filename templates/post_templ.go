@@ -28,7 +28,7 @@ func PostPage(post models.BlogPost, contentHtml string, comments []models.Commen
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		if isHxRequest(ctx) {
+		if IsHxRequest(ctx) {
 			templ_7745c5c3_Err = PostContent(post, contentHtml, comments).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -49,7 +49,7 @@ func PostPage(post models.BlogPost, contentHtml string, comments []models.Commen
 				}
 				return templ_7745c5c3_Err
 			})
-			templ_7745c5c3_Err = base().Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = Base().Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -110,7 +110,15 @@ func PostContent(post models.BlogPost, contentHtml string, comments []models.Com
 			return templ_7745c5c3_Err
 		}
 		if isAuthed(ctx) {
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"absolute right-0 -top-8\"><button hx-get=\"{{ $.adminRoute }}/edit/{{ .post.ID }}\" hx-target=\"#main-container\" class=\"ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700\" aria-label=\"Delete Post\"><span>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"absolute right-0 -top-8\"><button hx-get=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(post.GetEditLink(GetAdminRoute(ctx))))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-target=\"#main-container\" class=\"ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700\" aria-label=\"Delete Post\"><span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -137,7 +145,7 @@ func PostContent(post models.BlogPost, contentHtml string, comments []models.Com
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(formatAsDateTime(post.CreatedAt))
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(FormatAsDateTime(post.CreatedAt))
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates\post.templ`, Line: 39, Col: 66}
 		}
@@ -283,7 +291,7 @@ func PostContent(post models.BlogPost, contentHtml string, comments []models.Com
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var18 string
-				templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(formatAsDateTime(c.CreatedAt))
+				templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(FormatAsDateTime(c.CreatedAt))
 				if templ_7745c5c3_Err != nil {
 					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates\post.templ`, Line: 78, Col: 91}
 				}

@@ -1,0 +1,28 @@
+package admin
+
+import (
+    "blog.simoni.dev/templates"
+)
+
+templ LoginPage(redirect string, err string) {
+    if templates.IsHxRequest(ctx) {
+        @LoginComponent(redirect, err)
+    } else {
+        @templates.Base() {
+            @LoginComponent(redirect, err)
+        }
+    }
+}
+
+templ LoginComponent(redirect string, err string) {
+    <span>Login</span>
+    <form method="POST" action="/admin/login" hx-headers='{"x-csrf-token": "csrf"}'>
+        <input type="hidden" name="redirect" value={ redirect } />
+        <input class="text-black" type="text" name="username" placeholder="Username" />
+        <input class="text-black" type="password" name="password" placeholder="Password" />
+        <input type="submit" value="Log in" />
+    </form>
+    if len(err) > 0 {
+        <span class="text-red-500">{ err }</span>
+    }
+}

@@ -6,10 +6,10 @@ import (
 )
 
 templ IndexPage(posts []models.BlogPost, canDelete bool) {
-    if isHxRequest(ctx) {
+    if IsHxRequest(ctx) {
         @IndexContent(posts, canDelete)
     } else {
-        @base() {
+        @Base() {
             @IndexContent(posts, canDelete)
         }
     }
@@ -38,7 +38,7 @@ templ IndexContent(posts []models.BlogPost, canDelete bool) {
             </div>
             <div class="flex flex-wrap gap-4 text-xl items-center">
                 <span class="text-gray-400">
-                    { formatAsDateTime(post.CreatedAt) }
+                    { FormatAsDateTime(post.CreatedAt) }
                 </span>
                 for _, tag := range post.Tags {
                     @components.TagLink(tag)

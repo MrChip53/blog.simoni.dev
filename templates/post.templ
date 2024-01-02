@@ -6,10 +6,10 @@ import (
 )
 
 templ PostPage(post models.BlogPost, contentHtml string, comments []models.Comment) {
-    if isHxRequest(ctx) {
+    if IsHxRequest(ctx) {
         @PostContent(post, contentHtml, comments)
     } else {
-        @base() {
+        @Base() {
             @PostContent(post, contentHtml, comments)
         }
     }
@@ -26,7 +26,7 @@ templ PostContent(post models.BlogPost, contentHtml string, comments []models.Co
         <div class="relative">
             if isAuthed(ctx) {
                 <div class="absolute right-0 -top-8">
-                    <button hx-get="{{ $.adminRoute }}/edit/{{ .post.ID }}" hx-target="#main-container" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700" aria-label="Delete Post">
+                    <button hx-get={post.GetEditLink(GetAdminRoute(ctx))} hx-target="#main-container" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700" aria-label="Delete Post">
                         <span>Edit</span>
                     </button>
                 </div>
@@ -37,7 +37,7 @@ templ PostContent(post models.BlogPost, contentHtml string, comments []models.Co
         </div>
         <div class="flex flex-wrap items-center gap-4 text-xl">
                             <span class="text-gray-400">
-                                { formatAsDateTime(post.CreatedAt) }
+                                { FormatAsDateTime(post.CreatedAt) }
                             </span>
                 for _, tag := range post.Tags {
                     @components.TagLink(tag)
@@ -76,7 +76,7 @@ templ PostContent(post models.BlogPost, contentHtml string, comments []models.Co
                                 <span>{ c.Comment }</span>
                             </div>
                             <div class="flex flex-col gap-2">
-                                <span class="text-gray-400">{ formatAsDateTime(c.CreatedAt) }</span>
+                                <span class="text-gray-400">{ FormatAsDateTime(c.CreatedAt) }</span>
                             </div>
                         </div>
                     }

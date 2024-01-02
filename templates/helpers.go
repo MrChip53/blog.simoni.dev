@@ -56,7 +56,7 @@ func GetAdminRoute(ctx context.Context) string {
 	return adminRoute
 }
 
-func isHxRequest(ctx context.Context) bool {
+func IsHxRequest(ctx context.Context) bool {
 	hxRequest, ok := ctx.Value("isHxRequest").(bool)
 	if !ok {
 		return false
@@ -72,7 +72,7 @@ func isAuthed(ctx context.Context) bool {
 	return authed
 }
 
-func formatAsDateTime(t time.Time) string {
+func FormatAsDateTime(t time.Time) string {
 	year, month, day := t.Date()
 	dateString := fmt.Sprintf("%d/%02d/%02d", year, month, day)
 

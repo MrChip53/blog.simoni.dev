@@ -4,53 +4,22 @@ import (
 	"blog.simoni.dev/auth"
 	"blog.simoni.dev/models"
 	"blog.simoni.dev/templates"
+	"blog.simoni.dev/templates/admin"
+	"blog.simoni.dev/templates/components"
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"html/template"
 	"log"
 	"net/http"
-	"path"
 	"strings"
 	"time"
 )
 
 type Router struct {
 	Db *gorm.DB
-}
-
-func createRenderer(templatePath string) multitemplate.Renderer {
-	funcMap := template.FuncMap{
-		"formatAsDateTime": formatAsDateTime,
-		"getSlug":          getSlug,
-		"truncateString":   truncateString,
-	}
-
-	basePath := path.Join(templatePath, "base.html")
-
-	r := multitemplate.NewRenderer()
-
-	// Regular pages
-	r.AddFromFilesFuncs("comments", funcMap, basePath, path.Join(templatePath, "comments.html"))
-
-	// Admin pages
-
-	r.AddFromFilesFuncs("adminDashboard", funcMap, basePath, path.Join(templatePath, "admin/dashboard.html"))
-	r.AddFromFilesFuncs("adminLogin", funcMap, basePath, path.Join(templatePath, "admin/login.html"))
-	r.AddFromFilesFuncs("adminNewPost", funcMap, basePath, path.Join(templatePath, "admin/new-post.html"))
-	r.AddFromFilesFuncs("postEdit", funcMap, basePath, path.Join(templatePath, "admin/edit.html"))
-
-	// Components
-	r.AddFromFilesFuncs("toast", funcMap, path.Join(templatePath, "components/toast.html"))
-
-	// Error pages
-	r.AddFromFilesFuncs("notFound", funcMap, basePath, path.Join(templatePath, "errors/404.html"))
-
-	return r
 }
 
 func NewRouter(db *gorm.DB) *Router {
@@ -77,10 +46,9 @@ func (r *Router) HandleSettings(ctx *gin.Context) {
 
 	ctx.Header("HX-Retarget", "#toastContainer")
 	ctx.Header("HX-Reswap", "beforeend")
-	ctx.HTML(200, "toast", gin.H{
-		"toastId": "toast-3824892389",
-		"toast":   "Switch theme",
-	})
+	ctx.Status(http.StatusOK)
+	toast := components.ToastComponent("toast-3824892389", "Switch theme")
+	toast.Render(context.TODO(), ctx.Writer)
 }
 
 func (r *Router) HandleUser(ctx *gin.Context) {
@@ -140,9 +108,9 @@ func (r *Router) HandleComment(ctx *gin.Context) {
 	ctx.Header("HX-Retarget", "#comments-"+postId)
 	ctx.Header("HX-Reswap", "innerHTML")
 
-	ctx.HTML(200, "comments", addGenerics(ctx, gin.H{
-		"comments": comments,
-	}))
+	ctx.Status(http.StatusOK)
+	html := components.CommentsComponent(comments)
+	html.Render(context.TODO(), ctx.Writer)
 }
 
 func (r *Router) HandlePost(ctx *gin.Context) {
@@ -154,9 +122,7 @@ func (r *Router) HandlePost(ctx *gin.Context) {
 	var post models.BlogPost
 	if err := r.Db.Preload("Tags").Where("day(created_at) = ? AND month(created_at) = ? AND year(created_at) = ? AND slug = ?", day, month, year, slug).First(&post).Error; err != nil {
 		log.Println("Index failed to get posts:", err)
-		ctx.HTML(404, "notFound", addGenerics(ctx, gin.H{
-			"title": "Content Not Found",
-		}))
+		r.HandleNotFound(ctx)
 		return
 	}
 
@@ -178,21 +144,16 @@ func (r *Router) HandlePostEdit(ctx *gin.Context) {
 	var post models.BlogPost
 	if err := r.Db.Preload("Tags").Where("id = ?", postId).First(&post).Error; err != nil {
 		log.Println("Index failed to get posts:", err)
-		ctx.HTML(404, "notFound", addGenerics(ctx, gin.H{
-			"title": "Content Not Found",
-		}))
+		r.HandleNotFound(ctx)
 		return
 	}
 
 	postHtml := parseMarkdown([]byte(post.Content))
 
 	ctx.Header("HX-Title", "Editing "+post.Title)
-
-	ctx.HTML(200, "postEdit", addGenerics(ctx, gin.H{
-		"title":       post.Title,
-		"post":        post,
-		"contentHtml": template.HTML(postHtml),
-	}))
+	ctx.Status(http.StatusOK)
+	html := admin.EditPostPage(post, string(postHtml))
+	html.Render(createContext(ctx, "Editing "+post.Title), ctx.Writer)
 }
 
 func (r *Router) PostPostEdit(ctx *gin.Context) {
@@ -246,15 +207,17 @@ func (r *Router) HandleTag(ctx *gin.Context) {
 }
 
 func (r *Router) HandleNotFound(ctx *gin.Context) {
-	ctx.HTML(404, "notFound", addGenerics(ctx, gin.H{
-		"title": "Content Not Found",
-	}))
+	ctx.Status(http.StatusNotFound)
+	ctx.Header("HX-Title", "Oops!")
+	html := templates.NotFoundPage()
+	html.Render(createContext(ctx, "Oops!"), ctx.Writer)
 }
 
 func (r *Router) HandleInternalServerError(ctx *gin.Context) {
-	ctx.HTML(500, "notFound", addGenerics(ctx, gin.H{
-		"title": "Internal Server Error",
-	}))
+	ctx.Status(http.StatusInternalServerError)
+	ctx.Header("HX-Title", "Internal Server Error")
+	html := templates.NotFoundPage()
+	html.Render(createContext(ctx, "Internal Server Error"), ctx.Writer)
 }
 
 func (r *Router) HandleHealth(ctx *gin.Context) {
@@ -268,36 +231,35 @@ func (r *Router) HandleAdminLoginRequest(ctx *gin.Context) {
 	password := ctx.PostForm("password")
 	redirectPath := ctx.PostForm("redirect")
 
+	var errString string
+
 	var user models.User
 	if err := r.Db.Where("username = ?", username).First(&user).Error; err != nil {
 		log.Println("AdminLogin failed to get user:", err)
-		r.HandleError(ctx, "Invalid username or password", func(ctx *gin.Context) {
-			ctx.HTML(200, "adminLogin", addGenerics(ctx, gin.H{
-				"title": "Admin Login",
-				"path":  ctx.Request.URL.Path,
-				"error": "Invalid username or password",
-			}))
+		errString = "Invalid username or password"
+		r.HandleError(ctx, errString, func(ctx *gin.Context) {
+			ctx.Header("HX-Title", "Login")
+			html := admin.LoginPage(redirectPath, errString)
+			html.Render(createContext(ctx, "Login"), ctx.Writer)
 		}, err)
 		return
 	}
 
 	if match, err := user.VerifyPassword(password); err != nil {
 		log.Println("AdminLogin failed to verify password:", err)
-		r.HandleError(ctx, "Invalid username or password", func(ctx *gin.Context) {
-			ctx.HTML(200, "adminLogin", addGenerics(ctx, gin.H{
-				"title": "Admin Login",
-				"path":  ctx.Request.URL.Path,
-				"error": "Invalid username or password",
-			}))
+		errString = "Invalid username or password"
+		r.HandleError(ctx, errString, func(ctx *gin.Context) {
+			ctx.Header("HX-Title", "Login")
+			html := admin.LoginPage(redirectPath, errString)
+			html.Render(createContext(ctx, "Login"), ctx.Writer)
 		}, err)
 		return
 	} else if !match {
-		r.HandleError(ctx, "Invalid username or password", func(ctx *gin.Context) {
-			ctx.HTML(200, "adminLogin", addGenerics(ctx, gin.H{
-				"title": "Admin Login",
-				"path":  ctx.Request.URL.Path,
-				"error": "Invalid username or password",
-			}))
+		errString = "Invalid username or password"
+		r.HandleError(ctx, errString, func(ctx *gin.Context) {
+			ctx.Header("HX-Title", "Login")
+			html := admin.LoginPage(redirectPath, errString)
+			html.Render(createContext(ctx, "Login"), ctx.Writer)
 		}, err)
 		return
 	}
@@ -305,31 +267,28 @@ func (r *Router) HandleAdminLoginRequest(ctx *gin.Context) {
 	err := user.NewAuthTokens(ctx)
 	if err != nil {
 		log.Println("AdminLogin failed to generate tokens:", err)
-		r.HandleError(ctx, "Invalid username or password", func(ctx *gin.Context) {
-			ctx.HTML(200, "adminLogin", addGenerics(ctx, gin.H{
-				"title": "Admin Login",
-				"path":  ctx.Request.URL.Path,
-				"error": "Something went wrong",
-			}))
+		errString = "Invalid username or password"
+		r.HandleError(ctx, errString, func(ctx *gin.Context) {
+			ctx.Header("HX-Title", "Login")
+			html := admin.LoginPage(redirectPath, errString)
+			html.Render(createContext(ctx, "Login"), ctx.Writer)
 		}, err)
 		return
 	}
-
-	ctx.Redirect(302, redirectPath)
+	ctx.Redirect(http.StatusFound, redirectPath)
 }
 
 func (r *Router) HandleAdminDashboard(ctx *gin.Context) {
 	claims := ctx.MustGet("authToken").(*auth.JwtPayload)
 	if claims == nil {
-		ctx.Redirect(302, "/admin/login?redirect="+ctx.Request.URL.Path)
+		ctx.Redirect(http.StatusFound, "/admin/login?redirect="+ctx.Request.URL.Path)
 		ctx.Abort()
 		return
 	}
 
-	ctx.HTML(200, "adminDashboard", addGenerics(ctx, gin.H{
-		"title":    "Admin Dashboard",
-		"username": claims.Username,
-	}))
+	ctx.Header("HX-Title", "Admin Dashboard")
+	html := admin.DashboardPage(claims.Username)
+	html.Render(createContext(ctx, "Admin Dashboard"), ctx.Writer)
 }
 
 func (r *Router) HandleAdminGenerateMarkdown(ctx *gin.Context) {
@@ -350,16 +309,16 @@ func (r *Router) HandleAdminLogin(ctx *gin.Context) {
 		redirect = adminRoute
 	}
 
-	ctx.HTML(200, "adminLogin", addGenerics(ctx, gin.H{
-		"title":    "Admin Login",
-		"redirect": redirect,
-	}))
+	ctx.Header("HX-Title", "Login")
+	html := admin.LoginPage(redirect, "")
+	html.Render(createContext(ctx, "Login"), ctx.Writer)
 }
 
 func (r *Router) HandleAdminNewBlogPost(ctx *gin.Context) {
-	ctx.HTML(200, "adminNewPost", addGenerics(ctx, gin.H{
-		"title": "New Blog Post",
-	}))
+	ctx.Header("HX-Title", "New Blog Post")
+	ctx.Status(http.StatusOK)
+	html := admin.NewPostPage()
+	html.Render(createContext(ctx, "New Blog Post"), ctx.Writer)
 }
 
 func (r *Router) HandleAdminNewBlogPostRequest(ctx *gin.Context) {
@@ -449,12 +408,11 @@ func (r *Router) HandleAdminPosts(ctx *gin.Context) {
 		return
 	}
 
-	ctx.HTML(200, "index", addGenerics(ctx, gin.H{
-		"title":     "Posts",
-		"posts":     posts,
-		"noPosts":   len(posts) == 0,
-		"canDelete": true,
-	}))
+	ctx.Header("HX-Title", "Manage Posts")
+
+	ctx.Status(200)
+	indexHtml := templates.IndexPage(posts, true)
+	indexHtml.Render(createContext(ctx, "Manage Posts"), ctx.Writer)
 }
 
 func (r *Router) HandleError(ctx *gin.Context, message string, fn func(ctx *gin.Context), err error) {
@@ -464,19 +422,16 @@ func (r *Router) HandleError(ctx *gin.Context, message string, fn func(ctx *gin.
 	if exists && hxRequest.(bool) {
 		ctx.Header("HX-Retarget", "#toastContainer")
 		ctx.Header("HX-Reswap", "beforeend")
-		ctx.HTML(200, "toast", gin.H{
-			"toastId": "toast-" + toastId,
-			"toast":   message,
-		})
+		ctx.Status(http.StatusOK)
+		toast := components.ToastComponent("toast-"+toastId, message)
+		toast.Render(context.TODO(), ctx.Writer)
 		return
 	}
 
 	if fn != nil {
 		fn(ctx)
 	} else {
-		ctx.HTML(500, "notFound", gin.H{
-			"title": "Internal Server Error",
-		})
+		r.HandleInternalServerError(ctx)
 	}
 }
 

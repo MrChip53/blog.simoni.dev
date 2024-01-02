@@ -25,7 +25,6 @@ func NewServer(db *gorm.DB) (*gin.Engine, error) {
 
 	engine.Static("/css", "css")
 	engine.Static("/js", "js")
-	engine.HTMLRender = createRenderer("./templates")
 
 	engine.NoRoute(router.HandleNotFound)
 

@@ -1,0 +1,56 @@
+package admin
+
+import "blog.simoni.dev/templates"
+
+templ NewPostPage() {
+    if templates.IsHxRequest(ctx) {
+        @NewPostComponent()
+    } else {
+        @templates.Base() {
+            @NewPostComponent()
+        }
+    }
+}
+
+templ NewPostComponent() {
+    <div class="flex flex-col gap-10 w-full items-center my-10">
+      <div class="flex flex-col gap-4 w-full max-w-2xl">
+        <div class="flex flex-col gap-2">
+          <h1 class="font-bold">New Post</h1>
+          <p class="text-gray-500">Create a new post</p>
+        </div>
+        <form hx-boost="true" action="/admin/new-post" method="POST" class="flex flex-col gap-4">
+          <div class="flex flex-col gap-2">
+            <label for="title" class="text-lg font-semibold">Title</label>
+            <input type="text" name="title" id="title" class="border border-gray-300 rounded-md p-2 text-black" required />
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="content" class="text-lg font-semibold">Content</label>
+            <textarea hx-post="/admin/generate-markdown" hx-swap="innerHTML swap:300ms settle:300ms show:none" hx-trigger="input delay:1s" hx-target="#contentPreview" name="content" id="content" cols="30" rows="10" class="border border-gray-300 rounded-md p-2 text-black" required></textarea>
+          </div>
+          <div id="contentPreview" class="post-body">
+            Content preview here
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="tags" class="text-lg font-semibold">Tags</label>
+            <input type="text" name="tags" id="tags" class="border border-gray-300 rounded-md p-2 text-black" required />
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="description" class="text-lg font-semibold">Description</label>
+            <input type="text" name="description" id="description" class="border border-gray-300 rounded-md p-2 text-black" />
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="image" class="text-lg font-semibold">Image</label>
+            <input type="text" name="image" id="image" class="border border-gray-300 rounded-md p-2 text-black" />
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="published" class="text-lg font-semibold">Published</label>
+            <input type="checkbox" name="published" id="published" class="border border-gray-300 rounded-md p-2 text-black" />
+          </div>
+            <div class="flex flex-col gap-2">
+                <button type="submit" class="bg-purple-600 text-white rounded-md p-2 text-black">Create</button>
+            </div>
+        </form>
+      </div>
+    </div>
+}

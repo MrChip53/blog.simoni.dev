@@ -1,0 +1,15 @@
+package templates
+
+templ NotFoundPage() {
+    if IsHxRequest(ctx) {
+            @NotFoundComponent()
+        } else {
+            @Base() {
+                @NotFoundComponent()
+            }
+        }
+}
+
+templ NotFoundComponent() {
+    <h3 class="mb-4">The content you were looking for could not be found.</h3>
+}

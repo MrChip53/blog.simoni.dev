@@ -1,0 +1,22 @@
+package components
+
+import "blog.simoni.dev/models"
+import "blog.simoni.dev/helpers"
+
+templ CommentsComponent(comments []models.Comment) {
+    if len(comments) == 0 {
+        <span>This post has no comments. Be the first!</span>
+    } else {
+        for _, c := range comments {
+            <div id={ c.GetHtmlId() } class="flex flex-col gap-4 p-1 bg-glass rounded-md">
+                <div class="flex flex-col gap-2">
+                    <span class="text-lg font-semibold">{ c.Author }</span>
+                    <span>{ c.Comment }</span>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <span class="text-gray-400">{ helpers.FormatAsDateTime(c.CreatedAt) }</span>
+                </div>
+            </div>
+        }
+    }
+}

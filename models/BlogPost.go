@@ -44,6 +44,10 @@ func (p *BlogPost) UpdateTags(tx *gorm.DB) error {
 	return nil
 }
 
+func (p *BlogPost) GetEditLink(adminRoute string) string {
+	return fmt.Sprintf("%s/edit/%d", adminRoute, p.ID)
+}
+
 func (p *BlogPost) GetCommentPostLink() string {
 	return fmt.Sprintf("/comment/%d", p.ID)
 }
