@@ -278,7 +278,7 @@ func PostContent(post models.BlogPost, contentHtml string, comments []models.Com
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" class=\"flex flex-col gap-4 p-1 bg-glass\"><div class=\"flex flex-col gap-2\"><span class=\"text-lg font-semibold\">")
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" class=\"flex flex-col gap-4 p-1 bg-glass rounded-md\"><div class=\"flex flex-col gap-2\"><span class=\"text-lg font-semibold\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

@@ -51,7 +51,7 @@ func renderHook(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool
 func NewRenderer() *mdhtml.Renderer {
 	// init formatter and style
 	if htmlFormatter == nil {
-		htmlFormatter = html.New(html.TabWidth(4))
+		htmlFormatter = html.New(html.TabWidth(4), html.WithClasses(true), html.WithLineNumbers(true))
 		if htmlFormatter == nil {
 			panic("couldn't create html formatter")
 		}

@@ -71,7 +71,7 @@ templ PostContent(post models.BlogPost, contentHtml string, comments []models.Co
                     This post has no comments. Be the first!
                 } else {
                     for _, c := range comments {
-                        <div id={ c.GetHtmlId() } class="flex flex-col gap-4 p-1 bg-glass">
+                        <div id={ c.GetHtmlId() } class="flex flex-col gap-4 p-1 bg-glass rounded-md">
                             <div class="flex flex-col gap-2">
                                 <span class="text-lg font-semibold">{ c.Author }</span>
                                 <span>{ c.Comment }</span>
