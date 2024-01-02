@@ -10,12 +10,12 @@ import "context"
 import "io"
 import "bytes"
 
-func getCopyJsFunction(text string, copyId string) templ.ComponentScript {
+func getCopyJsFunction(text string) templ.ComponentScript {
 	return templ.ComponentScript{
 		Name:       `__templ_getCopyJsFunction_c70c`,
-		Function:   `function __templ_getCopyJsFunction_c70c(text, copyId){copyToClipboard(atob(text))}`,
-		Call:       templ.SafeScript(`__templ_getCopyJsFunction_c70c`, text, copyId),
-		CallInline: templ.SafeScriptInline(`__templ_getCopyJsFunction_c70c`, text, copyId),
+		Function:   `function __templ_getCopyJsFunction_c70c(text){copyToClipboard(atob(text))}`,
+		Call:       templ.SafeScript(`__templ_getCopyJsFunction_c70c`, text),
+		CallInline: templ.SafeScriptInline(`__templ_getCopyJsFunction_c70c`, text),
 	}
 }
 
@@ -32,7 +32,7 @@ func CopyButton(text string, copyId string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, getCopyJsFunction(text, copyId))
+		templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, getCopyJsFunction(text))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -44,11 +44,11 @@ func CopyButton(text string, copyId string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" type=\"button\" class=\"code-block-copy\" title=\"Copy to clipboard\" _=\"on click\n            remove .opacity-100 from .copy-icon in me then\n            add .opacity-0 to .copy-icon in me then\n            settle then\n            add .hidden to .copy-icon in me then\n            remove .hidden from .check-icon in me then\n            remove .opacity-0 from .check-icon in me then\n            add .opacity-100 to .check-icon in me then\n            settle then\n            wait 2s then\n            remove .opacity-100 from .check-icon in me then\n            add .opacity-0 to .check-icon in me then\n            settle then\n            add .hidden to .check-icon in me then\n            remove .hidden from .copy-icon in me then\n            remove .opacity-0 from .copy-icon in me then\n            add .opacity-100 to .copy-icon in me then\n            settle\" onClick=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" type=\"button\" class=\"code-block-copy\" title=\"Copy to clipboard\" _=\"on click\n            remove .opacity-100 from .copy-icon in me then\n            add .opacity-0 to .copy-icon in me then\n            settle then\n            add .hidden to .copy-icon in me then\n            remove .hidden from .check-icon in me then\n            remove .opacity-0 from .check-icon in me then\n            add .opacity-100 to .check-icon in me then\n            settle then\n            wait 500ms then\n            remove .opacity-100 from .check-icon in me then\n            add .opacity-0 to .check-icon in me then\n            settle then\n            add .hidden to .check-icon in me then\n            remove .hidden from .copy-icon in me then\n            remove .opacity-0 from .copy-icon in me then\n            add .opacity-100 to .copy-icon in me then\n            settle\" onClick=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var2 templ.ComponentScript = getCopyJsFunction(text, copyId)
+		var templ_7745c5c3_Var2 templ.ComponentScript = getCopyJsFunction(text)
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2.Call)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
