@@ -1,6 +1,9 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"fmt"
+	"gorm.io/gorm"
+)
 
 type BlogPost struct {
 	gorm.Model
@@ -39,4 +42,12 @@ func (p *BlogPost) UpdateTags(tx *gorm.DB) error {
 	}
 
 	return nil
+}
+
+func (p *BlogPost) GetCommentPostLink() string {
+	return fmt.Sprintf("/comment/%d", p.ID)
+}
+
+func (p *BlogPost) GetCommentsHtmlId() string {
+	return fmt.Sprintf("comments-%d", p.ID)
 }

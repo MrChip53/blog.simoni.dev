@@ -8,6 +8,14 @@ import (
 	"time"
 )
 
+func GetPageTitle(ctx context.Context) string {
+	title, ok := ctx.Value("pageTitle").(string)
+	if !ok {
+		return "mrchip53's blog"
+	}
+	return title
+}
+
 func GetThemeLink(ctx context.Context) string {
 	theme, ok := ctx.Value("theme").(string)
 	if !ok {
@@ -32,14 +40,6 @@ func GetDeletePostLink(adminRoute string, postId uint) string {
 	return fmt.Sprintf("%s/post/%d", adminRoute, postId)
 }
 
-func GetTitle(ctx context.Context) string {
-	title, ok := ctx.Value("title").(string)
-	if !ok {
-		return "mrchip53's blog"
-	}
-	return title
-}
-
 func GenerateContent(ctx context.Context) string {
 	content, ok := ctx.Value("contentFunction").(func() string)
 	if !ok {
@@ -62,6 +62,14 @@ func isHxRequest(ctx context.Context) bool {
 		return false
 	}
 	return hxRequest
+}
+
+func isAuthed(ctx context.Context) bool {
+	authed, ok := ctx.Value("authed").(bool)
+	if !ok {
+		return false
+	}
+	return authed
 }
 
 func formatAsDateTime(t time.Time) string {

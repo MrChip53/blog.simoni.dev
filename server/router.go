@@ -60,6 +60,7 @@ func NewRouter(db *gorm.DB) *Router {
 }
 
 func (r *Router) HandleIndex(ctx *gin.Context) {
+	var title = "mrchip53's blog"
 	var posts []models.BlogPost
 	if err := r.Db.Preload("Tags").Order("created_at DESC").Limit(10).Find(&posts).Error; err != nil {
 		log.Println("Index failed to get posts:", err)
@@ -67,21 +68,10 @@ func (r *Router) HandleIndex(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Header("HX-Title", "mrchip53's blog")
-
-	//ctx.HTML(200, "index", addGenerics(ctx, gin.H{
-	//	"title":   "mrchip53's blog",
-	//	"posts":   posts,
-	//	"noPosts": len(posts) == 0,
-	//}))
-
-	// Create a context variable that inherits from a parent, and sets the value "test".
-	//ctx := context.WithValue(context.Background(), themeContextKey, "test")
-
-	// Pass the ctx variable to the render function.
 	ctx.Status(200)
+	ctx.Header("HX-Title", title)
 	indexHtml := templates.IndexPage(posts, false)
-	indexHtml.Render(createContext(ctx), ctx.Writer)
+	indexHtml.Render(createContext(ctx, title), ctx.Writer)
 }
 
 func (r *Router) HandleSettings(ctx *gin.Context) {
@@ -179,12 +169,9 @@ func (r *Router) HandlePost(ctx *gin.Context) {
 
 	ctx.Header("HX-Title", post.Title)
 
-	ctx.HTML(200, "post", addGenerics(ctx, gin.H{
-		"title":       post.Title,
-		"post":        post,
-		"comments":    comments,
-		"contentHtml": template.HTML(postHtml),
-	}))
+	ctx.Status(200)
+	indexHtml := templates.PostPage(post, string(postHtml), comments)
+	indexHtml.Render(createContext(ctx, post.Title), ctx.Writer)
 }
 
 func (r *Router) HandlePostEdit(ctx *gin.Context) {
@@ -498,7 +485,7 @@ func (r *Router) HandleError(ctx *gin.Context, message string, fn func(ctx *gin.
 	}
 }
 
-func createContext(ctx *gin.Context) context.Context {
+func createContext(ctx *gin.Context, pageTitle string) context.Context {
 	username, uOk := ctx.Get("username")
 	theme, ok := ctx.Get("theme")
 	_, aOk := ctx.Get("authed")
@@ -526,6 +513,7 @@ func createContext(ctx *gin.Context) context.Context {
 	} else {
 		ct = context.WithValue(ct, "theme", theme.(string))
 	}
+	ct = context.WithValue(ct, "pageTitle", pageTitle)
 
 	return ct
 }

@@ -28,9 +28,9 @@ func base() templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(GetTitle(ctx))
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(GetPageTitle(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/base.templ`, Line: 8, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/base.templ`, Line: 8, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -89,7 +89,7 @@ func base() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</script></head><body hx-ext=\"title,theme\"><nav class=\"flex justify-center items-center py-3 sticky top-0 bg-neutral-800 z-50 md:flex-nowrap flex-wrap\"><div class=\"md:w-1/2 w-5/6\"><div class=\"flex\"><div hx-boost=\"true\" hx-target=\"#main-container\" hx-swap=\"innerHTML swap:300ms settle:300ms show:window:top\" class=\"flex md:flex-nowrap flex-wrap items-center justify-between w-full mr-auto ml-auto\"><a class=\"text-xl py-[0.3125rem] mr-4 no-highlights\" href=\"/\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</script></head><body hx-ext=\"title,theme\"><nav class=\"flex justify-center items-center py-3 top-0 bg-neutral-800 z-50 md:flex-nowrap flex-wrap\"><div class=\"md:w-1/2 w-5/6\"><div class=\"flex\"><div hx-boost=\"true\" hx-target=\"#main-container\" hx-swap=\"innerHTML swap:300ms settle:300ms show:window:top\" class=\"flex md:flex-nowrap flex-wrap items-center justify-between w-full mr-auto ml-auto\"><a class=\"text-xl py-[0.3125rem] mr-4 no-highlights\" href=\"/\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
