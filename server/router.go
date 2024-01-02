@@ -35,8 +35,6 @@ func createRenderer(templatePath string) multitemplate.Renderer {
 	r := multitemplate.NewRenderer()
 
 	// Regular pages
-	r.AddFromFilesFuncs("index", funcMap, basePath, path.Join(templatePath, "index.html"))
-	r.AddFromFilesFuncs("post", funcMap, basePath, path.Join(templatePath, "post.html"))
 	r.AddFromFilesFuncs("comments", funcMap, basePath, path.Join(templatePath, "comments.html"))
 
 	// Admin pages

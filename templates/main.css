@@ -72,6 +72,22 @@ h3 {
  Blog Post Styles Start
  */
 
+.code-block-wrapper {
+    @apply relative;
+}
+
+.code-block-copy {
+    @apply absolute;
+    @apply top-4;
+    @apply right-4;
+    @apply p-2;
+    @apply text-white;
+    @apply text-sm;
+    @apply bg-glass;
+    @apply rounded-md;
+    @apply z-10;
+}
+
 .post-body {
     @apply text-lg;
 }

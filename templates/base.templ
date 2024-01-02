@@ -18,6 +18,15 @@ templ base() {
       <script src="/js/htmx.min.js"></script>
       <script src="/js/htmx.title.js"></script>
       <script src="/js/htmx.theme.js"></script>
+      <script type="application/javascript">
+          function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function () {
+              console.log("Copied to clipboard");
+            }, function (err) {
+              console.log("Failed to copy to clipboard");
+            });
+          }
+        </script>
     </head>
 
     <body hx-ext="title,theme">

@@ -1,6 +1,9 @@
 package md
 
 import (
+	"blog.simoni.dev/templates/components"
+	"context"
+	"encoding/base64"
 	"github.com/alecthomas/chroma"
 	"github.com/alecthomas/chroma/formatters/html"
 	"github.com/alecthomas/chroma/lexers"
@@ -42,7 +45,12 @@ func renderCode(w io.Writer, codeBlock *ast.CodeBlock, entering bool) {
 
 func renderHook(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
 	if code, ok := node.(*ast.CodeBlock); ok {
+		b64Data := base64.StdEncoding.EncodeToString(code.Literal)
+		io.WriteString(w, "<div class=\"code-block-wrapper\">")
+		copyButton := components.CopyButton(b64Data)
+		copyButton.Render(context.TODO(), w)
 		renderCode(w, code, entering)
+		io.WriteString(w, "</div>")
 		return ast.GoToNext, true
 	}
 	return ast.GoToNext, false
