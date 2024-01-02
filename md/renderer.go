@@ -10,6 +10,7 @@ import (
 	"github.com/alecthomas/chroma/styles"
 	"github.com/gomarkdown/markdown/ast"
 	mdhtml "github.com/gomarkdown/markdown/html"
+	"github.com/google/uuid"
 	"io"
 )
 
@@ -47,7 +48,8 @@ func renderHook(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool
 	if code, ok := node.(*ast.CodeBlock); ok {
 		b64Data := base64.StdEncoding.EncodeToString(code.Literal)
 		io.WriteString(w, "<div class=\"code-block-wrapper\">")
-		copyButton := components.CopyButton(b64Data)
+		copyId := uuid.New().String()
+		copyButton := components.CopyButton(b64Data, "copyBtn-"+copyId)
 		copyButton.Render(context.TODO(), w)
 		renderCode(w, code, entering)
 		io.WriteString(w, "</div>")
