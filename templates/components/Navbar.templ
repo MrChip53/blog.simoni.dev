@@ -1,6 +1,7 @@
 package components
 
 import "blog.simoni.dev/helpers"
+import "blog.simoni.dev/templates"
 
 templ Navbar(oobSwap bool) {
     <nav id="navbar-container"
@@ -45,6 +46,9 @@ templ Navbar(oobSwap bool) {
                         <ul class="flex flex-col pl-0 mb-0 list-none mt-2 md:mt-0 me-auto md:flex-row">
                             @MenuLink("Home", templ.SafeURL("/"), true)
                             @MenuLink("Portfolio", templ.URL("https://simoni.dev/"), false)
+                            if templates.IsAdmin(ctx) {
+                                @MenuLink("Admin", templ.SafeURL("/admin"), true)
+                            }
                             if !helpers.IsAuthed(ctx) {
                                 @MenuLink("Log in", templ.SafeURL("/login"), true)
                             }

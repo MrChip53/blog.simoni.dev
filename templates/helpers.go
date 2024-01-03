@@ -64,8 +64,8 @@ func IsHxRequest(ctx context.Context) bool {
 	return hxRequest
 }
 
-func isAuthed(ctx context.Context) bool {
-	authed, ok := ctx.Value("authed").(bool)
+func IsAdmin(ctx context.Context) bool {
+	authed, ok := ctx.Value("isAdmin").(bool)
 	if !ok {
 		return false
 	}

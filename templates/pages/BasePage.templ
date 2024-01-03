@@ -9,7 +9,7 @@ templ Base() {
 
     <head>
       <meta charset="UTF-8" />
-      <title>{ templates.GetPageTitle(ctx) }</title>
+      @components.Title()
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -32,7 +32,7 @@ templ Base() {
         </script>
     </head>
 
-    <body hx-ext="title,theme">
+    <body hx-ext="theme">
       @components.Navbar(false)
       <div id="main-container" class="flex flex-col gap-10 w-full items-center my-10" hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms show:window:top">
         { children... }

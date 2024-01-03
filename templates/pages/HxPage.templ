@@ -3,6 +3,7 @@ package pages
 import "blog.simoni.dev/templates/components"
 
 templ HxPage() {
+    @components.Title()
     @components.Navbar(true)
     { children... }
 }
