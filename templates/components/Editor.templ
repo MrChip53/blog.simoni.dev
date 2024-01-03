@@ -1,0 +1,53 @@
+package components
+
+script MountEditor() {
+    document.addEventListener("keydown", (ev) => {
+        const tabs = ['editor', 'preview']
+        if (ev.altKey === true && ev.key === 'h') {
+            ev.preventDefault()
+            const currentTabId = document.querySelector("[data-tab-content]:not(.hidden)").id.replace('Content', '')
+            const newTabId = tabs[tabs.indexOf(currentTabId) + 1] || tabs[0]
+            SwitchTab(newTabId)
+        }
+    });
+}
+
+script SwitchTab(id string) {
+    SwitchTab(id)
+}
+
+templ EditorComponent(content string, contentHtml string) {
+    <script type="text/javascript">
+        function SwitchTab(id) {
+            const elements = document.querySelectorAll("[data-tab-content]")
+            elements.forEach((element) => {
+                element.classList.add("hidden")
+            })
+            const btn = document.getElementById(id + "Btn")
+
+            const content = document.getElementById(id + "Content")
+            content.classList.remove("hidden")
+
+            if (id === "editor" ) {
+                const textarea = document.getElementById("content")
+                textarea.focus()
+            }
+        }
+    </script>
+    @MountEditor()
+    <div class="flex flex-col">
+        <div>
+            <button type="button" data-tab id="editorBtn" class="bg-glass p-2" onClick={SwitchTab("editor")}>Editor</button>
+            <button type="button" data-tab id="previewBtn" class="bg-glass p-2" onClick={SwitchTab("preview")}>Preview</button>
+        </div>
+        <div class="bg-glass">
+            <div data-tab-content id="editorContent" class="flex flex-col gap-2">
+                <label for="content" class="text-lg font-semibold">Content</label>
+                <textarea hx-post="/admin/generate-markdown" hx-swap="innerHTML swap:300ms settle:300ms show:none" hx-trigger="input delay:1s" hx-target="#previewContent" tabindex="-1" name="content" id="content" cols="30" rows="10" class="border border-gray-300 rounded-md p-2 text-black" required>{ content }</textarea>
+            </div>
+            <div data-tab-content id="previewContent" class="hidden mb-4 post-body">
+                @templ.Raw(contentHtml)
+            </div>
+        </div>
+    </div>
+}
