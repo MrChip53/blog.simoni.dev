@@ -1,0 +1,11 @@
+package components
+
+templ MenuLink(text string, link templ.SafeURL, boost bool) {
+    <li class="flex pt-1 mr-6 md:hover:text-neutral-300 active:text-neutral-300 md:hover:border-b-neutral-300 border-b-2 border-b-transparent transition-all">
+        <a
+         if !boost {
+            hx-boost="false"
+         }
+         class="flex py-4 md:py-0 items-center static text-md no-highlights" href={link}>{text}</a>
+    </li>
+}
