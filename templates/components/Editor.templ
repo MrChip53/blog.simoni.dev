@@ -1,7 +1,13 @@
 package components
 
 script MountEditor() {
-    document.addEventListener("keydown", (ev) => {
+    const kdListeners = []
+    kdListeners.forEach((listener) => {
+        if (listener.name === "handleEditorTabs") {
+            document.removeEventListener("keydown", listener.listener)
+        }
+    })
+    document.addEventListener("keydown", function handleEditorTabs(ev) {
         const tabs = ['editor', 'preview']
         if (ev.altKey === true && ev.key === 'h') {
             ev.preventDefault()
