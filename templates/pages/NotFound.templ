@@ -1,8 +1,12 @@
-package templates
+package pages
+
+import "blog.simoni.dev/templates"
 
 templ NotFoundPage() {
-    if IsHxRequest(ctx) {
-            @NotFoundComponent()
+    if templates.IsHxRequest(ctx) {
+            @HxPage() {
+                @NotFoundComponent()
+            }
         } else {
             @Base() {
                 @NotFoundComponent()

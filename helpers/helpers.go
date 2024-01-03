@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
@@ -22,4 +23,12 @@ func FormatAsDateTime(t time.Time) string {
 	timeString := chicagoTime.Format(timeFormat)
 
 	return timeString
+}
+
+func IsAuthed(ctx context.Context) bool {
+	authed, ok := ctx.Value("authed").(bool)
+	if !ok {
+		return false
+	}
+	return authed
 }

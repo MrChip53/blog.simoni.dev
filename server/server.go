@@ -34,18 +34,18 @@ func NewServer(db *gorm.DB) (*gin.Engine, error) {
 	engine.GET("/tag/:tag", router.HandleTag)
 	engine.GET("/user/:username", router.HandleUser)
 	engine.GET("/settings", router.HandleSettings)
+	engine.GET("/login", router.HandleLogin)
 
 	engine.POST("/comment/:postId", router.HandleComment)
+	engine.POST("/login", router.HandleLoginRequest)
 
 	// Admin pages
 	engine.GET(adminRoute, router.HandleAdminDashboard)
-	engine.GET(adminRoute+"/login", router.HandleAdminLogin)
 	engine.GET(adminRoute+"/new-post", router.HandleAdminNewBlogPost)
 	engine.GET(adminRoute+"/posts", router.HandleAdminPosts)
 	engine.GET(adminRoute+"/edit/:postId", router.HandlePostEdit)
 
 	engine.POST(adminRoute+"/edit/:postId", router.PostPostEdit)
-	engine.POST(adminRoute+"/login", router.HandleAdminLoginRequest)
 	engine.POST(adminRoute+"/new-post", router.HandleAdminNewBlogPostRequest)
 
 	// Authed utility endpoints

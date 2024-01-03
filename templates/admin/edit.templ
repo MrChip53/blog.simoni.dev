@@ -5,12 +5,15 @@ import (
     "blog.simoni.dev/templates/components"
     "blog.simoni.dev/templates"
 )
+import "blog.simoni.dev/templates/pages"
 
 templ EditPostPage(post models.BlogPost, contentHtml string) {
     if templates.IsHxRequest(ctx) {
-        @EditPostComponent(post, contentHtml)
+        @pages.HxPage() {
+            @EditPostComponent(post, contentHtml)
+        }
     } else {
-        @templates.Base() {
+        @pages.Base() {
             @EditPostComponent(post, contentHtml)
         }
     }

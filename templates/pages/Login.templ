@@ -1,0 +1,42 @@
+package pages
+
+import "blog.simoni.dev/templates"
+
+templ LoginPage(redirect string, err string) {
+    if templates.IsHxRequest(ctx) {
+        @HxPage() {
+            @LoginComponent(redirect, err)
+        }
+    } else {
+        @Base() {
+            @LoginComponent(redirect, err)
+        }
+    }
+}
+
+templ LoginComponent(redirect string, err string) {
+    <div class="flex flex-col items-center bg-glass p-4 rounded-md">
+        <h2>Login</h2>
+        <form method="POST" action="/login" hx-headers='{"x-csrf-token": "csrf"}'>
+            <input type="hidden" name="redirect" value={ redirect } />
+            <div class="mb-6">
+                <label class="block text-white text-sm mb-2" for="username">
+                    Username
+                </label>
+                <input class="bg-glass rounded-md p-2 text-white" type="text" name="username" placeholder="Username" />
+            </div>
+            <div class="mb-6">
+                <label class="block text-white text-sm mb-2" for="password">
+                    Password
+                </label>
+                <input class="bg-glass rounded-md p-2 text-white" type="password" name="password" placeholder="Password" />
+            </div>
+            <div class="w-full flex justify-center">
+                <input type="submit" value="Log in" class="p-2 rounded-md bg-glass" />
+            </div>
+        </form>
+        if len(err) > 0 {
+            <span class="text-red-500">{ err }</span>
+        }
+    </div>
+}

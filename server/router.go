@@ -3,9 +3,9 @@ package server
 import (
 	"blog.simoni.dev/auth"
 	"blog.simoni.dev/models"
-	"blog.simoni.dev/templates"
 	"blog.simoni.dev/templates/admin"
 	"blog.simoni.dev/templates/components"
+	"blog.simoni.dev/templates/pages"
 	"context"
 	"errors"
 	"fmt"
@@ -37,7 +37,7 @@ func (r *Router) HandleIndex(ctx *gin.Context) {
 
 	ctx.Status(200)
 	ctx.Header("HX-Title", title)
-	indexHtml := templates.IndexPage(posts, false)
+	indexHtml := pages.IndexPage(posts, false)
 	indexHtml.Render(createContext(ctx, title), ctx.Writer)
 }
 
@@ -134,7 +134,7 @@ func (r *Router) HandlePost(ctx *gin.Context) {
 	ctx.Header("HX-Title", post.Title)
 
 	ctx.Status(200)
-	indexHtml := templates.PostPage(post, string(postHtml), comments)
+	indexHtml := pages.PostPage(post, string(postHtml), comments)
 	indexHtml.Render(createContext(ctx, post.Title), ctx.Writer)
 }
 
@@ -180,6 +180,19 @@ func (r *Router) PostPostEdit(ctx *gin.Context) {
 	ctx.Header("HX-Location", location)
 }
 
+func (r *Router) HandleLogin(ctx *gin.Context) {
+	redirect := ctx.Request.URL.Query().Get("redirect")
+
+	if redirect == "" {
+		redirect = "/"
+	}
+
+	ctx.Status(http.StatusOK)
+	ctx.Header("HX-Title", "Login")
+	html := pages.LoginPage(redirect, "")
+	html.Render(createContext(ctx, "Login"), ctx.Writer)
+}
+
 func (r *Router) HandleTag(ctx *gin.Context) {
 	tag := ctx.Param("tag")
 
@@ -202,21 +215,21 @@ func (r *Router) HandleTag(ctx *gin.Context) {
 
 	ctx.Header("HX-Title", "Posts tagged with "+tag)
 
-	indexHtml := templates.IndexPage(posts, false)
+	indexHtml := pages.IndexPage(posts, false)
 	indexHtml.Render(createContext(ctx, "Posts tagged with "+tag), ctx.Writer)
 }
 
 func (r *Router) HandleNotFound(ctx *gin.Context) {
 	ctx.Status(http.StatusNotFound)
 	ctx.Header("HX-Title", "Oops!")
-	html := templates.NotFoundPage()
+	html := pages.NotFoundPage()
 	html.Render(createContext(ctx, "Oops!"), ctx.Writer)
 }
 
 func (r *Router) HandleInternalServerError(ctx *gin.Context) {
 	ctx.Status(http.StatusInternalServerError)
 	ctx.Header("HX-Title", "Internal Server Error")
-	html := templates.NotFoundPage()
+	html := pages.NotFoundPage()
 	html.Render(createContext(ctx, "Internal Server Error"), ctx.Writer)
 }
 
@@ -226,7 +239,7 @@ func (r *Router) HandleHealth(ctx *gin.Context) {
 	})
 }
 
-func (r *Router) HandleAdminLoginRequest(ctx *gin.Context) {
+func (r *Router) HandleLoginRequest(ctx *gin.Context) {
 	username := ctx.PostForm("username")
 	password := ctx.PostForm("password")
 	redirectPath := ctx.PostForm("redirect")
@@ -235,22 +248,22 @@ func (r *Router) HandleAdminLoginRequest(ctx *gin.Context) {
 
 	var user models.User
 	if err := r.Db.Where("username = ?", username).First(&user).Error; err != nil {
-		log.Println("AdminLogin failed to get user:", err)
+		log.Println("Login failed to get user:", err)
 		errString = "Invalid username or password"
 		r.HandleError(ctx, errString, func(ctx *gin.Context) {
 			ctx.Header("HX-Title", "Login")
-			html := admin.LoginPage(redirectPath, errString)
+			html := pages.LoginPage(redirectPath, errString)
 			html.Render(createContext(ctx, "Login"), ctx.Writer)
 		}, err)
 		return
 	}
 
 	if match, err := user.VerifyPassword(password); err != nil {
-		log.Println("AdminLogin failed to verify password:", err)
+		log.Println("Login failed to verify password:", err)
 		errString = "Invalid username or password"
 		r.HandleError(ctx, errString, func(ctx *gin.Context) {
 			ctx.Header("HX-Title", "Login")
-			html := admin.LoginPage(redirectPath, errString)
+			html := pages.LoginPage(redirectPath, errString)
 			html.Render(createContext(ctx, "Login"), ctx.Writer)
 		}, err)
 		return
@@ -258,30 +271,33 @@ func (r *Router) HandleAdminLoginRequest(ctx *gin.Context) {
 		errString = "Invalid username or password"
 		r.HandleError(ctx, errString, func(ctx *gin.Context) {
 			ctx.Header("HX-Title", "Login")
-			html := admin.LoginPage(redirectPath, errString)
+			html := pages.LoginPage(redirectPath, errString)
 			html.Render(createContext(ctx, "Login"), ctx.Writer)
 		}, err)
 		return
 	}
 
-	err := user.NewAuthTokens(ctx)
+	_, err := user.NewAuthTokens(ctx)
 	if err != nil {
-		log.Println("AdminLogin failed to generate tokens:", err)
+		log.Println("Login failed to generate tokens:", err)
 		errString = "Invalid username or password"
 		r.HandleError(ctx, errString, func(ctx *gin.Context) {
 			ctx.Header("HX-Title", "Login")
-			html := admin.LoginPage(redirectPath, errString)
+			html := pages.LoginPage(redirectPath, errString)
 			html.Render(createContext(ctx, "Login"), ctx.Writer)
 		}, err)
 		return
 	}
+	//AddJwtPayloadToCtx(ctx, payload)
 	ctx.Redirect(http.StatusFound, redirectPath)
+	//html := components.Navbar(true)
+	//html.Render(createContext(ctx, ""), ctx.Writer)
 }
 
 func (r *Router) HandleAdminDashboard(ctx *gin.Context) {
 	claims := ctx.MustGet("authToken").(*auth.JwtPayload)
 	if claims == nil {
-		ctx.Redirect(http.StatusFound, "/admin/login?redirect="+ctx.Request.URL.Path)
+		ctx.Redirect(http.StatusFound, "/login?redirect="+ctx.Request.URL.Path)
 		ctx.Abort()
 		return
 	}
@@ -310,7 +326,7 @@ func (r *Router) HandleAdminLogin(ctx *gin.Context) {
 	}
 
 	ctx.Header("HX-Title", "Login")
-	html := admin.LoginPage(redirect, "")
+	html := pages.LoginPage(redirect, "")
 	html.Render(createContext(ctx, "Login"), ctx.Writer)
 }
 
@@ -411,7 +427,7 @@ func (r *Router) HandleAdminPosts(ctx *gin.Context) {
 	ctx.Header("HX-Title", "Manage Posts")
 
 	ctx.Status(200)
-	indexHtml := templates.IndexPage(posts, true)
+	indexHtml := pages.IndexPage(posts, true)
 	indexHtml.Render(createContext(ctx, "Manage Posts"), ctx.Writer)
 }
 

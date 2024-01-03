@@ -22,17 +22,19 @@ func (u *User) VerifyPassword(password string) (bool, error) {
 	return auth.VerifyPassword(password, u.Password)
 }
 
-func (u *User) NewAuthTokens(ctx *gin.Context) error {
-	jwtToken, refreshToken, err := auth.GenerateTokens(&auth.JwtPayload{
+func (u *User) NewAuthTokens(ctx *gin.Context) (*auth.JwtPayload, error) {
+	payload := &auth.JwtPayload{
 		Username: u.Username,
 		Admin:    u.Admin,
 		UserId:   u.ID,
 		Theme:    u.Theme,
-	})
+	}
+
+	jwtToken, refreshToken, err := auth.GenerateTokens(payload)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	auth.AddAuthCookies(ctx, jwtToken, refreshToken)
-	return nil
+	return payload, nil
 }

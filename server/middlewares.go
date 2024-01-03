@@ -13,6 +13,15 @@ func IsHXRequest() gin.HandlerFunc {
 	}
 }
 
+func AddJwtPayloadToCtx(ctx *gin.Context, jwtPayload *auth.JwtPayload) {
+	ctx.Set("authToken", jwtPayload)
+	ctx.Set("authed", true)
+	ctx.Set("theme", jwtPayload.Theme)
+	ctx.Set("isAdmin", jwtPayload.Admin)
+	ctx.Set("username", jwtPayload.Username)
+	ctx.Set("userId", jwtPayload.UserId)
+}
+
 func ExtractAuth() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authToken, err := auth.ExtractAuth(ctx)
@@ -26,12 +35,7 @@ func ExtractAuth() gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set("authToken", authToken)
-		ctx.Set("authed", true)
-		ctx.Set("theme", authToken.Theme)
-		ctx.Set("isAdmin", authToken.Admin)
-		ctx.Set("username", authToken.Username)
-		ctx.Set("userId", authToken.UserId)
+		AddJwtPayloadToCtx(ctx, authToken)
 
 		if ctx.Request.URL.Path == "/admin/login" {
 			ctx.Redirect(302, "/admin")

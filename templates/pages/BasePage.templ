@@ -1,0 +1,43 @@
+package pages
+
+import "blog.simoni.dev/templates/components"
+import "blog.simoni.dev/templates"
+
+templ Base() {
+    <!DOCTYPE html>
+    <html lang="en">
+
+    <head>
+      <meta charset="UTF-8" />
+      <title>{ templates.GetPageTitle(ctx) }</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <!-- <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet"> -->
+      <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+      <link rel="stylesheet" href="/css/main.css" />
+      <link id="theme" rel="stylesheet" href={ templates.GetThemeLink(ctx) } />
+      <script src="/js/hyperscript.min.js"></script>
+      <script src="/js/htmx.min.js"></script>
+      <script src="/js/htmx.title.js"></script>
+      <script src="/js/htmx.theme.js"></script>
+      <script type="text/javascript">
+          function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function () {
+              console.log("Copied to clipboard");
+            }, function (err) {
+              console.log("Failed to copy to clipboard");
+            });
+          }
+        </script>
+    </head>
+
+    <body hx-ext="title,theme">
+      @components.Navbar(false)
+      <div id="main-container" class="flex flex-col gap-10 w-full items-center my-10" hx-boost="true" hx-target="#main-container" hx-swap="innerHTML swap:300ms settle:300ms show:window:top">
+        { children... }
+      </div>
+      <div id="toastContainer" class="fixed flex flex-col gap-2 bottom-0 right-0 p-3"></div>
+    </body>
+    </html>
+}

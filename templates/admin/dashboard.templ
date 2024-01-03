@@ -1,14 +1,15 @@
 package admin
 
-import (
-    "blog.simoni.dev/templates"
-)
+import "blog.simoni.dev/templates/pages"
+import "blog.simoni.dev/templates"
 
 templ DashboardPage(username string) {
     if templates.IsHxRequest(ctx) {
-        @DashboardComponent(username)
+        @pages.HxPage() {
+            @DashboardComponent(username)
+        }
     } else {
-        @templates.Base() {
+        @pages.Base() {
             @DashboardComponent(username)
         }
     }

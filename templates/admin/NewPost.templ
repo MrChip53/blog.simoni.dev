@@ -1,12 +1,15 @@
 package admin
 
 import "blog.simoni.dev/templates"
+import "blog.simoni.dev/templates/pages"
 
 templ NewPostPage() {
     if templates.IsHxRequest(ctx) {
-        @NewPostComponent()
+        @pages.HxPage() {
+            @NewPostComponent()
+        }
     } else {
-        @templates.Base() {
+        @pages.Base() {
             @NewPostComponent()
         }
     }
