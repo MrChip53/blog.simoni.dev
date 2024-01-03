@@ -28,6 +28,32 @@ func ExtractAuth(ctx *gin.Context) (jwtPayload *JwtPayload, err error) {
 	return VerifyJwtToken(jwtCookie.Value)
 }
 
+func DeleteAuthCookies(ctx *gin.Context) {
+	jwtCookie := http.Cookie{
+		Name:     "token",
+		Value:    "",
+		Path:     "/",
+		Domain:   "",
+		MaxAge:   -1,
+		SameSite: http.SameSiteStrictMode,
+		Secure:   true,
+		HttpOnly: true,
+	}
+	http.SetCookie(ctx.Writer, &jwtCookie)
+
+	refreshCookie := http.Cookie{
+		Name:     "refreshToken",
+		Value:    "",
+		Path:     "/",
+		Domain:   "",
+		MaxAge:   -1,
+		SameSite: http.SameSiteStrictMode,
+		Secure:   true,
+		HttpOnly: true,
+	}
+	http.SetCookie(ctx.Writer, &refreshCookie)
+}
+
 func AddAuthCookies(ctx *gin.Context, jwtToken string, refreshToken string) {
 	jwtCookie := http.Cookie{
 		Name:     "token",

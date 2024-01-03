@@ -239,6 +239,11 @@ func (r *Router) HandleHealth(ctx *gin.Context) {
 	})
 }
 
+func (r *Router) HandleLogoutRequest(ctx *gin.Context) {
+	auth.DeleteAuthCookies(ctx)
+	ctx.Redirect(http.StatusFound, "/")
+}
+
 func (r *Router) HandleLoginRequest(ctx *gin.Context) {
 	username := ctx.PostForm("username")
 	password := ctx.PostForm("password")

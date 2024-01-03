@@ -51,6 +51,8 @@ templ Navbar(oobSwap bool) {
                             }
                             if !helpers.IsAuthed(ctx) {
                                 @MenuLink("Log in", templ.SafeURL("/login"), true)
+                            } else {
+                                @MenuLink("Log out", templ.SafeURL("/logout"), true)
                             }
                         </ul>
                     </div>

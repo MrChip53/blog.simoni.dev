@@ -2,6 +2,10 @@ package components
 
 import "blog.simoni.dev/templates"
 
-templ Title() {
-    <title id="pageTitle">{ templates.GetPageTitle(ctx) }</title>
+templ Title(oobSwap bool) {
+    <title id="pageTitle"
+        if oobSwap {
+            hx-swap-oob="true"
+        }
+    >{ templates.GetPageTitle(ctx) }</title>
 }
