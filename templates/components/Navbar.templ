@@ -47,6 +47,7 @@ templ Navbar(oobSwap bool) {
                             @MenuLink("Home", templ.SafeURL("/"), true)
                             @MenuLink("Portfolio", templ.URL("https://simoni.dev/"), false)
                             if templates.IsAdmin(ctx) {
+                                @MenuLink("New Post", templ.SafeURL("/admin/new-post"), true)
                                 @MenuLink("Admin", templ.SafeURL("/admin"), true)
                             }
                             if !helpers.IsAuthed(ctx) {

@@ -39,15 +39,13 @@ templ EditPostComponent(post models.BlogPost, contentHtml string) {
                     <button type="submit" class="bg-purple-600 text-white rounded-md p-2 text-black">Save</button>
                 </div>
             </form>
-            <div class="flex gap-4 text-xl">
+            <div class="flex flex-wrap items-center gap-4 text-xl">
                 <span class="text-gray-400">
                     { templates.FormatAsDateTime(post.CreatedAt) }
                 </span>
-                <div class="flex gap-2">
-                    for _, tag := range post.Tags {
-                        @components.TagLink(tag)
-                    }
-                </div>
+                for _, tag := range post.Tags {
+                    @components.TagLink(tag)
+                }
             </div>
         </section>
 }

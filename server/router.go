@@ -14,6 +14,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -29,14 +30,13 @@ func NewRouter(db *gorm.DB) *Router {
 func (r *Router) HandleIndex(ctx *gin.Context) {
 	var title = "mrchip53's blog"
 	var posts []models.BlogPost
-	if err := r.Db.Preload("Tags").Order("created_at DESC").Limit(10).Find(&posts).Error; err != nil {
+	if err := r.Db.Preload("Tags").Where("draft = false").Order("created_at DESC").Limit(10).Find(&posts).Error; err != nil {
 		log.Println("Index failed to get posts:", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	ctx.Status(200)
-	ctx.Header("HX-Title", title)
+	ctx.Status(http.StatusOK)
 	indexHtml := pages.IndexPage(posts, false)
 	indexHtml.Render(createContext(ctx, title), ctx.Writer)
 }
@@ -54,19 +54,15 @@ func (r *Router) HandleSettings(ctx *gin.Context) {
 func (r *Router) HandleUser(ctx *gin.Context) {
 	username := ctx.Param("username")
 	var posts []models.BlogPost
-	if err := r.Db.Preload("Tags").Where("author = ?", username).Order("created_at DESC").Find(&posts).Error; err != nil {
+	if err := r.Db.Preload("Tags").Where("author = ? AND draft = false", username).Order("created_at DESC").Find(&posts).Error; err != nil {
 		log.Println("Index failed to get posts:", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	ctx.Header("HX-Title", username+"'s Page")
-
-	ctx.HTML(200, "index", addGenerics(ctx, gin.H{
-		"title":   username + "'s Page",
-		"posts":   posts,
-		"noPosts": len(posts) == 0,
-	}))
+	ctx.Status(http.StatusOK)
+	indexHtml := pages.IndexPage(posts, false)
+	indexHtml.Render(createContext(ctx, username+"'s Page"), ctx.Writer)
 }
 
 func (r *Router) HandleComment(ctx *gin.Context) {
@@ -131,8 +127,6 @@ func (r *Router) HandlePost(ctx *gin.Context) {
 
 	postHtml := parseMarkdown([]byte(post.Content))
 
-	ctx.Header("HX-Title", post.Title)
-
 	ctx.Status(200)
 	indexHtml := pages.PostPage(post, string(postHtml), comments)
 	indexHtml.Render(createContext(ctx, post.Title), ctx.Writer)
@@ -150,7 +144,6 @@ func (r *Router) HandlePostEdit(ctx *gin.Context) {
 
 	postHtml := parseMarkdown([]byte(post.Content))
 
-	ctx.Header("HX-Title", "Editing "+post.Title)
 	ctx.Status(http.StatusOK)
 	html := admin.EditPostPage(post, string(postHtml))
 	html.Render(createContext(ctx, "Editing "+post.Title), ctx.Writer)
@@ -176,8 +169,12 @@ func (r *Router) PostPostEdit(ctx *gin.Context) {
 		r.HandleError(ctx, "Failed to load new content.", nil, err)
 		return
 	}
-	location := fmt.Sprintf("{ \"path\": \"/post/%d/%d/%d/%s\", \"target\":\"#main-container\"}", post.CreatedAt.Month(), post.CreatedAt.Day(), post.CreatedAt.Year(), post.Slug)
-	ctx.Header("HX-Location", location)
+	var location = adminRoute
+	if !post.Draft {
+		location = fmt.Sprintf("{ \"path\": \"/post/%d/%d/%d/%s\", \"target\":\"#main-container\"}", post.CreatedAt.Month(), post.CreatedAt.Day(), post.CreatedAt.Year(), post.Slug)
+	}
+	ctx.Redirect(http.StatusFound, location)
+	//ctx.Header("HX-Location", location)
 }
 
 func (r *Router) HandleLogin(ctx *gin.Context) {
@@ -188,7 +185,7 @@ func (r *Router) HandleLogin(ctx *gin.Context) {
 	}
 
 	ctx.Status(http.StatusOK)
-	ctx.Header("HX-Title", "Login")
+
 	html := pages.LoginPage(redirect, "")
 	html.Render(createContext(ctx, "Login"), ctx.Writer)
 }
@@ -207,13 +204,11 @@ func (r *Router) HandleTag(ctx *gin.Context) {
 	}
 
 	var posts []models.BlogPost
-	if err := r.Db.Preload("Tags").Where("id IN ?", postIds).Order("created_at DESC").Find(&posts).Error; err != nil {
+	if err := r.Db.Preload("Tags").Where("id IN ? AND draft = false", postIds).Order("created_at DESC").Find(&posts).Error; err != nil {
 		log.Println("Tag failed to get posts:", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
-
-	ctx.Header("HX-Title", "Posts tagged with "+tag)
 
 	indexHtml := pages.IndexPage(posts, false)
 	indexHtml.Render(createContext(ctx, "Posts tagged with "+tag), ctx.Writer)
@@ -221,14 +216,12 @@ func (r *Router) HandleTag(ctx *gin.Context) {
 
 func (r *Router) HandleNotFound(ctx *gin.Context) {
 	ctx.Status(http.StatusNotFound)
-	ctx.Header("HX-Title", "Oops!")
 	html := pages.NotFoundPage()
 	html.Render(createContext(ctx, "Oops!"), ctx.Writer)
 }
 
 func (r *Router) HandleInternalServerError(ctx *gin.Context) {
 	ctx.Status(http.StatusInternalServerError)
-	ctx.Header("HX-Title", "Internal Server Error")
 	html := pages.NotFoundPage()
 	html.Render(createContext(ctx, "Internal Server Error"), ctx.Writer)
 }
@@ -256,7 +249,6 @@ func (r *Router) HandleLoginRequest(ctx *gin.Context) {
 		log.Println("Login failed to get user:", err)
 		errString = "Invalid username or password"
 		r.HandleError(ctx, errString, func(ctx *gin.Context) {
-			ctx.Header("HX-Title", "Login")
 			html := pages.LoginPage(redirectPath, errString)
 			html.Render(createContext(ctx, "Login"), ctx.Writer)
 		}, err)
@@ -267,7 +259,6 @@ func (r *Router) HandleLoginRequest(ctx *gin.Context) {
 		log.Println("Login failed to verify password:", err)
 		errString = "Invalid username or password"
 		r.HandleError(ctx, errString, func(ctx *gin.Context) {
-			ctx.Header("HX-Title", "Login")
 			html := pages.LoginPage(redirectPath, errString)
 			html.Render(createContext(ctx, "Login"), ctx.Writer)
 		}, err)
@@ -275,7 +266,6 @@ func (r *Router) HandleLoginRequest(ctx *gin.Context) {
 	} else if !match {
 		errString = "Invalid username or password"
 		r.HandleError(ctx, errString, func(ctx *gin.Context) {
-			ctx.Header("HX-Title", "Login")
 			html := pages.LoginPage(redirectPath, errString)
 			html.Render(createContext(ctx, "Login"), ctx.Writer)
 		}, err)
@@ -287,7 +277,6 @@ func (r *Router) HandleLoginRequest(ctx *gin.Context) {
 		log.Println("Login failed to generate tokens:", err)
 		errString = "Invalid username or password"
 		r.HandleError(ctx, errString, func(ctx *gin.Context) {
-			ctx.Header("HX-Title", "Login")
 			html := pages.LoginPage(redirectPath, errString)
 			html.Render(createContext(ctx, "Login"), ctx.Writer)
 		}, err)
@@ -307,8 +296,14 @@ func (r *Router) HandleAdminDashboard(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Header("HX-Title", "Admin Dashboard")
-	html := admin.DashboardPage(claims.Username)
+	var posts []models.BlogPost
+	if err := r.Db.Preload("Tags").Where("draft = true").Order("created_at DESC").Limit(10).Find(&posts).Error; err != nil {
+		log.Println("Index failed to get posts:", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	html := admin.DashboardPage(posts, strconv.Itoa(len(posts)), "0")
 	html.Render(createContext(ctx, "Admin Dashboard"), ctx.Writer)
 }
 
@@ -330,13 +325,11 @@ func (r *Router) HandleAdminLogin(ctx *gin.Context) {
 		redirect = adminRoute
 	}
 
-	ctx.Header("HX-Title", "Login")
 	html := pages.LoginPage(redirect, "")
 	html.Render(createContext(ctx, "Login"), ctx.Writer)
 }
 
 func (r *Router) HandleAdminNewBlogPost(ctx *gin.Context) {
-	ctx.Header("HX-Title", "New Blog Post")
 	ctx.Status(http.StatusOK)
 	html := admin.NewPostPage()
 	html.Render(createContext(ctx, "New Blog Post"), ctx.Writer)
@@ -347,6 +340,7 @@ func (r *Router) HandleAdminNewBlogPostRequest(ctx *gin.Context) {
 	tags := strings.Split(ctx.PostForm("tags"), ",")
 	content := ctx.PostForm("content")
 	description := ctx.PostForm("description")
+	draft := ctx.PostForm("publish") != "true"
 	slug := strings.ReplaceAll(title, " ", "-")
 
 	jwt, exists := ctx.Get("authToken")
@@ -357,7 +351,7 @@ func (r *Router) HandleAdminNewBlogPostRequest(ctx *gin.Context) {
 	author := jwt.(*auth.JwtPayload).Username
 
 	tx := r.Db.Begin()
-	newPost, err := models.NewBlogPost(tx, title, author, slug, strings.TrimSpace(content), description)
+	newPost, err := models.NewBlogPost(tx, title, author, slug, strings.TrimSpace(content), description, draft)
 	if err != nil {
 		tx.Rollback()
 		r.HandleError(ctx, "Failed to create blog post", nil, err)
@@ -428,8 +422,6 @@ func (r *Router) HandleAdminPosts(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
-
-	ctx.Header("HX-Title", "Manage Posts")
 
 	ctx.Status(200)
 	indexHtml := pages.IndexPage(posts, true)

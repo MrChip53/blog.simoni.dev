@@ -1,0 +1,31 @@
+package admin
+
+import "blog.simoni.dev/templates/pages"
+import "blog.simoni.dev/models"
+import "blog.simoni.dev/templates"
+
+templ DashboardPage(draftPosts []models.BlogPost, numDrafts string, currentPage string) {
+    if templates.IsHxRequest(ctx) {
+        @pages.HxPage() {
+            @DashboardComponent(draftPosts, numDrafts, currentPage)
+        }
+    } else {
+        @pages.Base() {
+            @DashboardComponent(draftPosts, numDrafts, currentPage)
+        }
+    }
+}
+
+templ DashboardComponent(draftPosts []models.BlogPost, numDrafts string, currentPage string) {
+    <section class="md:w-1/2 w-5/6 flex flex-col items-center">
+        <h3>Drafts</h3>
+        <p>There are {numDrafts} drafts.</p>
+        <ul>
+            for _, post := range draftPosts {
+                <li>
+                    <a href={templ.SafeURL(post.GetEditLink(templates.GetAdminRoute(ctx)))}>{post.Title}</a>
+                </li>
+            }
+        </ul>
+    </section>
+}

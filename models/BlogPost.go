@@ -13,15 +13,17 @@ type BlogPost struct {
 	Content     string `gorm:"type:text"`
 	Description string `gorm:"type:varchar(100)"`
 	Tags        []Tag  `gorm:"many2many:blog_post_tags;"`
+	Draft       bool   `gorm:"default:false"`
 }
 
-func NewBlogPost(db *gorm.DB, title string, author string, slug string, content string, description string) (newPost *BlogPost, err error) {
+func NewBlogPost(db *gorm.DB, title, author, slug, content, description string, draft bool) (newPost *BlogPost, err error) {
 	newPost = &BlogPost{
 		Title:       title,
 		Slug:        slug,
 		Content:     content,
 		Author:      author,
 		Description: description,
+		Draft:       draft,
 	}
 
 	if err := db.Create(newPost).Error; err != nil {
