@@ -28,8 +28,8 @@ func ExtractAuth() gin.HandlerFunc {
 		if err != nil {
 			log.Printf("Failed to extract auth: %v\n", err)
 			pathLength := len(ctx.Request.URL.Path)
-			if pathLength >= 6 && ctx.Request.URL.Path[:6] == "/admin" && ctx.Request.URL.Path != "/admin/login" {
-				ctx.Redirect(302, "/admin/login?redirect="+ctx.Request.URL.Path)
+			if pathLength >= 6 && ctx.Request.URL.Path[:6] == "/admin" {
+				ctx.Redirect(302, "/login?redirect="+ctx.Request.URL.Path)
 				ctx.Abort()
 			}
 			return
@@ -37,8 +37,8 @@ func ExtractAuth() gin.HandlerFunc {
 
 		AddJwtPayloadToCtx(ctx, authToken)
 
-		if ctx.Request.URL.Path == "/admin/login" {
-			ctx.Redirect(302, "/admin")
+		if ctx.Request.URL.Path == "/login" {
+			ctx.Redirect(302, "/")
 			ctx.Abort()
 			return
 		}
