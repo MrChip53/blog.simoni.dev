@@ -37,6 +37,10 @@ func NewServer(db *gorm.DB) (*gin.Engine, error) {
 	engine.GET("/login", router.HandleLogin)
 
 	engine.POST("/comment/:postId", router.HandleComment)
+
+	engine.POST("/user/username", router.HandleUsernameChange)
+	engine.POST("/user/password", router.HandlePasswordChange)
+
 	engine.POST("/login", router.HandleLoginRequest)
 	engine.GET("/logout", router.HandleLogoutRequest)
 

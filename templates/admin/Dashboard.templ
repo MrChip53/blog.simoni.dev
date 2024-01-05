@@ -18,6 +18,17 @@ templ DashboardPage(draftPosts []models.BlogPost, numDrafts string, currentPage 
 
 templ DashboardComponent(draftPosts []models.BlogPost, numDrafts string, currentPage string) {
     <section class="md:w-1/2 w-5/6 flex flex-col items-center">
+        <h3>Update Username</h3>
+        <form action="/user/username" method="POST">
+            <input class="bg-glass rounded-md p-2 text-white" type="text" name="username" placeholder="New Username" />
+            <input type="submit" value="Update" />
+        </form>
+        <h3>Update Password</h3>
+        <form action="/user/password" method="POST">
+            <input class="bg-glass rounded-md p-2 text-white" type="password" name="oldPassword" placeholder="Old Password" />
+            <input class="bg-glass rounded-md p-2 text-white" type="password" name="newPassword" placeholder="New Password" />
+            <input type="submit" value="Update" />
+        </form>
         <h3>Drafts</h3>
         <p>There are {numDrafts} drafts.</p>
         <ul>

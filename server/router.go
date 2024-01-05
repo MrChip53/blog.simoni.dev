@@ -27,6 +27,88 @@ func NewRouter(db *gorm.DB) *Router {
 	return &Router{Db: db}
 }
 
+func (r *Router) HandlePasswordChange(ctx *gin.Context) {
+	oldPassword := ctx.PostForm("oldPassword")
+	newPassword := ctx.PostForm("newPassword")
+
+	if len(newPassword) < 8 {
+		r.HandleError(ctx, "Password must be at least 8 characters", nil, nil)
+		return
+	}
+
+	var uId interface{}
+	var ok bool
+	if uId, ok = ctx.Get("userId"); !ok {
+		r.HandleError(ctx, "You must be logged in to change your password", nil, nil)
+		return
+	}
+	var userId uint
+	if userId, ok = uId.(uint); !ok {
+		r.HandleError(ctx, "You must be logged in to change your password", nil, nil)
+		return
+	}
+	var user models.User
+	if err := r.Db.Where("id = ?", userId).First(&user).Error; err != nil {
+		r.HandleError(ctx, "Failed to find user", nil, err)
+		return
+	}
+	if match, err := user.VerifyPassword(oldPassword); err != nil || !match {
+		r.HandleError(ctx, "Failed to change password", nil, err)
+		return
+	}
+
+	hash, err := auth.HashPassword(newPassword)
+	if err != nil {
+		r.HandleError(ctx, "Failed to change password", nil, err)
+		return
+	}
+
+	if err := r.Db.Model(&models.User{}).Where("id = ?", userId).Update("password", hash).Error; err != nil {
+		r.HandleError(ctx, "Failed to change password", nil, err)
+		return
+	}
+
+	// TODO change redirect location
+	ctx.Redirect(http.StatusFound, "/admin")
+}
+
+func (r *Router) HandleUsernameChange(ctx *gin.Context) {
+	newUsername := ctx.PostForm("username")
+	if len(newUsername) == 0 {
+		r.HandleError(ctx, "Username cannot be empty", nil, nil)
+		return
+	}
+	var uId interface{}
+	var ok bool
+	if uId, ok = ctx.Get("userId"); !ok {
+		r.HandleError(ctx, "You must be logged in to change your username", nil, nil)
+		return
+	}
+	var userId uint
+	if userId, ok = uId.(uint); !ok {
+		r.HandleError(ctx, "You must be logged in to change your username", nil, nil)
+		return
+	}
+	err := r.Db.Model(&models.User{}).Where("id = ?", userId).Update("username", newUsername).Error
+	if err != nil {
+		r.HandleError(ctx, "Failed to update username", nil, err)
+		return
+	}
+	var user models.User
+	if err = r.Db.Where("id = ?", userId).First(&user).Error; err != nil {
+		r.HandleError(ctx, "Failed to load new username.", nil, err)
+		return
+	}
+	_, err = user.NewAuthTokens(ctx)
+	if err != nil {
+		r.HandleError(ctx, "Failed to generate tokens", nil, err)
+		return
+	}
+
+	// TODO change redirect location
+	ctx.Redirect(http.StatusFound, "/admin")
+}
+
 func (r *Router) HandleIndex(ctx *gin.Context) {
 	var title = "mrchip53's blog"
 	var posts []models.BlogPost
