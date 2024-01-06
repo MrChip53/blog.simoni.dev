@@ -11,6 +11,7 @@ templ TagLink(tag models.Tag, post models.BlogPost, edit bool) {
             hx-target="this"
         } else {
             hx-get={ tag.GetLink() }
+            hx-push-url="true"
         }
         >
         #{ tag.Name }
