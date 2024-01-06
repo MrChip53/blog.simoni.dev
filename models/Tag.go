@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"gorm.io/gorm"
 )
 
@@ -29,4 +30,8 @@ func GetTag(db *gorm.DB, name string) (tag *Tag, err error) {
 
 func (t *Tag) GetLink() string {
 	return "/tag/" + t.Name
+}
+
+func (t *Tag) GetDeleteLink(postId uint) string {
+	return fmt.Sprintf("/admin/post/%d/tag/%d", postId, t.ID)
 }

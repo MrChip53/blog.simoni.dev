@@ -14,6 +14,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -198,7 +199,7 @@ func (r *Router) HandlePost(ctx *gin.Context) {
 	slug := ctx.Param("slug")
 
 	var post models.BlogPost
-	if err := r.Db.Preload("Tags").Where("day(created_at) = ? AND month(created_at) = ? AND year(created_at) = ? AND slug = ?", day, month, year, slug).First(&post).Error; err != nil {
+	if err := r.Db.Preload("Tags").Where("day(published_at) = ? AND month(published_at) = ? AND year(published_at) = ? AND slug = ?", day, month, year, slug).First(&post).Error; err != nil {
 		log.Println("Index failed to get posts:", err)
 		r.HandleNotFound(ctx)
 		return
@@ -235,25 +236,36 @@ func (r *Router) PostPostEdit(ctx *gin.Context) {
 	postId := ctx.Param("postId")
 
 	content := ctx.PostForm("content")
+	publish := ctx.PostForm("publish")
 
 	if len(content) == 0 {
 		r.HandleError(ctx, "Just delete the post instead.", nil, nil)
 		return
 	}
 
-	err := r.Db.Model(&models.BlogPost{}).Where("id = ?", postId).Update("content", strings.TrimSpace(content)).Error
+	var post models.BlogPost
+	if err := r.Db.Where("id = ?", postId).First(&post).Error; err != nil {
+		r.HandleError(ctx, "Failed to load new content.", nil, err)
+		return
+	}
+
+	post.Content = strings.TrimSpace(content)
+	var wasPublished = !post.Draft
+	post.Draft = publish != "on"
+	if !wasPublished {
+		post.Publish()
+		post.Slug = url.QueryEscape(strings.ToLower(strings.ReplaceAll(post.Title, " ", "-")))
+	}
+
+	err := r.Db.Save(&post).Error
 	if err != nil {
 		r.HandleError(ctx, "Failed to update post.", nil, err)
 		return
 	}
-	var post models.BlogPost
-	if err = r.Db.Where("id = ?", postId).First(&post).Error; err != nil {
-		r.HandleError(ctx, "Failed to load new content.", nil, err)
-		return
-	}
+
 	var location = adminRoute
 	if !post.Draft {
-		location = fmt.Sprintf("{ \"path\": \"/post/%d/%d/%d/%s\", \"target\":\"#main-container\"}", post.CreatedAt.Month(), post.CreatedAt.Day(), post.CreatedAt.Year(), post.Slug)
+		location = fmt.Sprintf("/post/%d/%d/%d/%s", post.CreatedAt.Month(), post.CreatedAt.Day(), post.CreatedAt.Year(), post.Slug)
 	}
 	ctx.Redirect(http.StatusFound, location)
 	//ctx.Header("HX-Location", location)
@@ -389,6 +401,72 @@ func (r *Router) HandleAdminDashboard(ctx *gin.Context) {
 	html.Render(createContext(ctx, "Admin Dashboard"), ctx.Writer)
 }
 
+func (r *Router) HandleAdminAddTagToPost(ctx *gin.Context) {
+	postId := ctx.Param("id")
+	tag := ctx.PostForm("tag")
+
+	err := r.Db.Transaction(func(tx *gorm.DB) error {
+		var blogPost models.BlogPost
+		if err := tx.First(&blogPost, postId).Error; err != nil {
+			return err
+		}
+
+		var tagModel models.Tag
+		if err := tx.Where("name = ?", tag).First(&tagModel).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				tagM, err := models.NewTag(tx, tag)
+				if err != nil {
+					return err
+				}
+				tagModel = *tagM
+			} else {
+				return err
+			}
+		}
+
+		if err := tx.Model(&blogPost).Association("Tags").Append(&tagModel); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		r.HandleError(ctx, "Failed to add tag", nil, err)
+		return
+	}
+
+	ctx.Status(http.StatusOK)
+}
+
+func (r *Router) HandleAdminDeleteTagFromPost(ctx *gin.Context) {
+	postId := ctx.Param("id")
+	tagId := ctx.Param("tagId")
+
+	err := r.Db.Transaction(func(tx *gorm.DB) error {
+		var blogPost models.BlogPost
+		if err := tx.First(&blogPost, postId).Error; err != nil {
+			return err
+		}
+
+		var tag models.Tag
+		if err := tx.First(&tag, tagId).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Model(&blogPost).Association("Tags").Delete(&tag); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		r.HandleError(ctx, "Failed to delete tag", nil, err)
+		return
+	}
+
+	ctx.Status(http.StatusOK)
+}
+
 func (r *Router) HandleAdminGenerateMarkdown(ctx *gin.Context) {
 	claims := ctx.MustGet("authToken").(*auth.JwtPayload)
 	if claims == nil {
@@ -423,7 +501,7 @@ func (r *Router) HandleAdminNewBlogPostRequest(ctx *gin.Context) {
 	content := ctx.PostForm("content")
 	description := ctx.PostForm("description")
 	draft := ctx.PostForm("publish") != "true"
-	slug := strings.ReplaceAll(title, " ", "-")
+	slug := url.QueryEscape(strings.ToLower(strings.ReplaceAll(title, " ", "-")))
 
 	jwt, exists := ctx.Get("authToken")
 	if !exists {

@@ -29,7 +29,7 @@ func GetTagLink(tag string) templ.SafeURL {
 }
 
 func GetPostSlug(post models.BlogPost) templ.SafeURL {
-	return templ.SafeURL(fmt.Sprintf("/post/%02d/%02d/%d/%s", post.CreatedAt.Month(), post.CreatedAt.Day(), post.CreatedAt.Year(), post.Slug))
+	return templ.SafeURL(fmt.Sprintf("/post/%02d/%02d/%d/%s", post.PublishedAt.Month(), post.PublishedAt.Day(), post.PublishedAt.Year(), post.Slug))
 }
 
 func GetUserLink(username string) templ.SafeURL {

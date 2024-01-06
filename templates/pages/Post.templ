@@ -41,10 +41,10 @@ templ PostContent(post models.BlogPost, contentHtml string, comments []models.Co
         </div>
         <div class="flex flex-wrap items-center gap-4 text-xl">
                             <span class="text-gray-400">
-                                { templates.FormatAsDateTime(post.CreatedAt) }
+                                { templates.FormatAsDateTime(*post.PublishedAt) }
                             </span>
                 for _, tag := range post.Tags {
-                    @components.TagLink(tag)
+                    @components.TagLink(tag, post, false)
                 }
         </div>
         <hr class="my-4" />

@@ -41,10 +41,10 @@ templ IndexContent(posts []models.BlogPost, canDelete bool) {
             </div>
             <div class="flex flex-wrap gap-4 text-xl items-center">
                 <span class="text-gray-400">
-                    { templates.FormatAsDateTime(post.CreatedAt) }
+                    { templates.FormatAsDateTime(*post.PublishedAt) }
                 </span>
                 for _, tag := range post.Tags {
-                    @components.TagLink(tag)
+                    @components.TagLink(tag, post, false)
                 }
             </div>
         </section>

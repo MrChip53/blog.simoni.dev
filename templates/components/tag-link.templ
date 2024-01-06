@@ -4,8 +4,15 @@ import (
     "blog.simoni.dev/models"
 )
 
-templ TagLink(tag models.Tag) {
-    <a class="bg-glass rounded-full hover:underline transition text-sm p-2" href={ templ.SafeURL(tag.GetLink()) }>
+templ TagLink(tag models.Tag, post models.BlogPost, edit bool) {
+    <button class="bg-glass rounded-full hover:underline transition text-sm p-2"
+        if edit {
+            hx-delete={ tag.GetDeleteLink(post.ID) }
+            hx-target="this"
+        } else {
+            hx-get={ tag.GetLink() }
+        }
+        >
         #{ tag.Name }
-    </a>
+    </button>
 }

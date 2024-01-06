@@ -1,0 +1,14 @@
+package components
+
+import (
+    "blog.simoni.dev/models"
+    "fmt"
+)
+
+templ CreateTag(post models.BlogPost) {
+    <input type="text"
+     hx-post={fmt.Sprintf("/admin/post/%d/tag", post.ID)}
+     hx-trigger="keyup[keyCode==13&&!shiftKey]"
+     hx-swap="none"
+     class="bg-glass rounded-full text-sm p-2" placeholder="Tag name" name="tag" />
+}
