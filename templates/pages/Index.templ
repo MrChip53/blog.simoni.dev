@@ -22,7 +22,7 @@ templ IndexContent(posts []models.BlogPost, canDelete bool) {
     for _, post := range posts {
         <section class="md:w-1/2 w-5/6">
             <div class="flex">
-                <h1 class="mb-4">
+                <h1 class="post-title mb-4">
                     <a class="hover:underline" href={ templates.GetPostSlug(post) }>{ post.Title }</a>
                 </h1>
                 if canDelete {
@@ -36,7 +36,7 @@ templ IndexContent(posts []models.BlogPost, canDelete bool) {
             <h2 class="mb-6 text-gray-400">
                 <a class="hover:underline" href={ templates.GetUserLink(post.Author) }>&commat;{ post.Author }</a>
             </h2>
-            <div class="mb-4 text-2xl">
+            <div class="post-desc mb-4 text-2xl">
                 { post.Description }
             </div>
             <div class="flex flex-wrap gap-4 text-xl items-center">

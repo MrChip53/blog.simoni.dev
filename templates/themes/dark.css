@@ -6,6 +6,18 @@ body {
     /*background: linear-gradient(to right, #2C5364, #203A43, #0F2027); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
 }
 
+.tag-btn {
+    @apply text-mantis-300;
+}
+
+.post-title {
+    @apply text-mantis-400;
+}
+
+.post-desc {
+    @apply text-mantis-300;
+}
+
 .post-body {
     @apply text-mantis-300;
 }

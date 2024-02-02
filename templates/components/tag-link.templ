@@ -5,7 +5,7 @@ import (
 )
 
 templ TagLink(tag models.Tag, post models.BlogPost, edit bool) {
-    <button class="bg-glass rounded-full hover:underline transition text-sm p-2"
+    <button class="tag-btn bg-glass rounded-full hover:underline transition text-sm p-2"
         if edit {
             hx-delete={ tag.GetDeleteLink(post.ID) }
             hx-target="this"
