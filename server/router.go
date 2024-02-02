@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -340,6 +341,7 @@ func (r *Router) HandleLoginRequest(ctx *gin.Context) {
 
 	var user models.User
 	if err := r.Db.Where("username = ?", username).First(&user).Error; err != nil {
+		time.Sleep(time.Duration(170+rand.Intn(35)) * time.Millisecond)
 		log.Println("Login failed to get user:", err)
 		errString = "Invalid username or password"
 		r.HandleError(ctx, errString, func(ctx *gin.Context) {
