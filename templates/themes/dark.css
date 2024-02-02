@@ -28,6 +28,10 @@ body {
     @apply cursor-pointer;
 }
 
+.code-block-copy {
+    @apply btn;
+}
+
 .tag-btn {
     @apply text-mantis-300;
 }
