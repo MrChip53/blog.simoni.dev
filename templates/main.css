@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-    @apply text-white;
+    @apply text-mantis-400;
 }
 
 h1 {
