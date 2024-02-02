@@ -15,7 +15,7 @@ templ LoginPage(redirect string, err string) {
 }
 
 templ LoginComponent(redirect string, err string) {
-    <div class="flex flex-col items-center bg-glass p-4 rounded-md">
+    <div class="card">
         <h2>Login</h2>
         <form method="POST" action="/login" hx-headers='{"x-csrf-token": "csrf"}'>
             <input type="hidden" name="redirect" value={ redirect } />
@@ -32,7 +32,7 @@ templ LoginComponent(redirect string, err string) {
                 <input class="bg-glass rounded-md p-2 text-white" type="password" name="password" placeholder="Password" />
             </div>
             <div class="w-full flex justify-center">
-                <input type="submit" value="Log in" class="p-2 rounded-md bg-glass" />
+                <input type="submit" value="Log in" class="btn bg-glass" />
             </div>
         </form>
         if len(err) > 0 {

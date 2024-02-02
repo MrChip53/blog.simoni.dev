@@ -18,6 +18,27 @@ h3 {
     @apply text-lg;
 }
 
+.card-container {
+    @apply flex;
+    @apply flex-wrap;
+    @apply justify-center;
+    @apply gap-4;
+    @apply w-full;
+}
+
+.card {
+    @apply flex;
+    @apply flex-col;
+    @apply items-center;
+    @apply p-4;
+    @apply rounded-md;
+}
+
+.btn {
+    @apply p-2;
+    @apply rounded-md;
+}
+
 .bg-glass {
     background: rgba(255, 255, 255, 0.15);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
