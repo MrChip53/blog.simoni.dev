@@ -1,12 +1,22 @@
 body {
-    @apply text-mantis-400;
+    @apply text-mantis-100;
     background: rgb(24, 24, 27);
     /*background: #0F2027;  /* fallback for old browsers */
     /*background: -webkit-linear-gradient(to right, #2C5364, #203A43, #0F2027);  /* Chrome 10-25, Safari 5.1-6 */
     /*background: linear-gradient(to right, #2C5364, #203A43, #0F2027); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
 }
 
+.post-body {
+    @apply text-mantis-300;
+}
 
+.post-body h1 {
+    @apply text-mantis-400;
+}
+
+.post-body h2 {
+    @apply text-mantis-400;
+}
 
 /* Background */ .bg { color: #f8f8f2; background-color: #272822; -moz-tab-size: 4; -o-tab-size: 4; tab-size: 4 }
 /* PreWrapper */ .chroma { color: #f8f8f2; background-color: #272822; -moz-tab-size: 4; -o-tab-size: 4; tab-size: 4; }
