@@ -1,17 +1,9 @@
 package server
 
 import (
-	"blog.simoni.dev/auth"
-	"blog.simoni.dev/models"
-	"blog.simoni.dev/templates/admin"
-	"blog.simoni.dev/templates/components"
-	"blog.simoni.dev/templates/pages"
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"log"
 	"math/rand"
 	"net/http"
@@ -19,6 +11,15 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"blog.simoni.dev/auth"
+	"blog.simoni.dev/models"
+	"blog.simoni.dev/templates/admin"
+	"blog.simoni.dev/templates/components"
+	"blog.simoni.dev/templates/pages"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Router struct {

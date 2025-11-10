@@ -1,12 +1,15 @@
 package server
 
 import (
+	"bytes"
+	"fmt"
+	"time"
+
 	"blog.simoni.dev/md"
 	"blog.simoni.dev/models"
-	"fmt"
 	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/ast"
 	"github.com/gomarkdown/markdown/parser"
-	"time"
 )
 
 func formatAsDateTime(t time.Time) string {
@@ -31,11 +34,58 @@ func formatAsDateTime(t time.Time) string {
 func parseMarkdown(bytes []byte) []byte {
 	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
 	p := parser.NewWithExtensions(extensions)
+	p.RegisterInline(':', parseWasmLoader)
 	doc := p.Parse(bytes)
 
 	renderer := md.NewRenderer()
 
 	return markdown.Render(doc, renderer)
+}
+
+// Syntax: ::wasm[type](url)
+// Example: ::wasm[game](https://example.com/game.wasm)
+func parseWasmLoader(p *parser.Parser, data []byte, offset int) (int, ast.Node) {
+	// Check for ::wasm prefix
+	if !bytes.HasPrefix(data[offset:], []byte("::wasm[")) {
+		return 0, nil
+	}
+
+	i := offset + 7 // len("::wasm[")
+
+	// Extract type
+	typeStart := i
+	for i < len(data) && data[i] != ']' {
+		i++
+	}
+	if i >= len(data) {
+		return 0, nil
+	}
+	wasmType := string(data[typeStart:i])
+	i++ // skip ']'
+
+	// Check for (
+	if i >= len(data) || data[i] != '(' {
+		return 0, nil
+	}
+	i++ // skip '('
+
+	// Extract URL
+	urlStart := i
+	for i < len(data) && data[i] != ')' {
+		i++
+	}
+	if i >= len(data) {
+		return 0, nil
+	}
+	wasmURL := string(data[urlStart:i])
+	i++ // skip ')'
+
+	node := &md.WasmLoader{
+		Type:    wasmType,
+		WasmURL: wasmURL,
+	}
+
+	return i - offset, node
 }
 
 func getSlug(post models.BlogPost) string {

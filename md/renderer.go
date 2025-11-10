@@ -1,9 +1,12 @@
 package md
 
 import (
-	"blog.simoni.dev/templates/components"
 	"context"
 	"encoding/base64"
+	"fmt"
+	"io"
+
+	"blog.simoni.dev/templates/components"
 	"github.com/alecthomas/chroma"
 	"github.com/alecthomas/chroma/formatters/html"
 	"github.com/alecthomas/chroma/lexers"
@@ -11,7 +14,6 @@ import (
 	"github.com/gomarkdown/markdown/ast"
 	mdhtml "github.com/gomarkdown/markdown/html"
 	"github.com/google/uuid"
-	"io"
 )
 
 var (
@@ -44,6 +46,12 @@ func renderCode(w io.Writer, codeBlock *ast.CodeBlock, entering bool) {
 	htmlHighlight(w, string(codeBlock.Literal), lang, "")
 }
 
+func renderWasmLoader(w io.Writer, wasm *WasmLoader) {
+	loaderId := uuid.New().String()
+
+	io.WriteString(w, fmt.Sprintf("<div id=\"wasm-%s\" data-type=\"%s\" data-wasm-url=\"%s\">", loaderId, wasm.Type, wasm.WasmURL))
+}
+
 func renderHook(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
 	if code, ok := node.(*ast.CodeBlock); ok {
 		b64Data := base64.StdEncoding.EncodeToString(code.Literal)
@@ -55,6 +63,12 @@ func renderHook(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool
 		io.WriteString(w, "</div>")
 		return ast.GoToNext, true
 	}
+
+	if wasm, ok := node.(*WasmLoader); ok && entering {
+		renderWasmLoader(w, wasm)
+		return ast.GoToNext, true
+	}
+
 	return ast.GoToNext, false
 }
 
