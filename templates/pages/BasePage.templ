@@ -21,8 +21,6 @@ templ Base() {
       <script src="/js/htmx.min.js"></script>
       <script src="/js/htmx.title.js"></script>
       <script src="/js/htmx.theme.js"></script>
-      <script src="/js/wasm_exec.js"></script>
-      <script src="/js/wasmLoader.js"></script>
       <script type="text/javascript">
           function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(function () {
@@ -32,6 +30,40 @@ templ Base() {
             });
           }
         </script>
+        <script>
+    function resizeIframe(iframe) {
+    try {
+        const doc = iframe.contentWindow.document;
+
+        // 1. Initial Resize (Important for the first time)
+        iframe.style.height = (doc.body.scrollHeight * 1.1) + 'px';
+
+        // 2. Set up MutationObserver to watch for content changes
+        const observerConfig = { 
+            childList: true, // Monitor child node additions/removals
+            subtree: true,   // Monitor deep into the DOM
+            characterData: true, // Monitor text changes
+            attributes: true // Monitor attribute changes (like style)
+        };
+
+        const observer = new MutationObserver(() => {
+            // Recalculate and set the height on any change
+            iframe.style.height = (doc.body.scrollHeight * 1.1) + 'px';
+        });
+
+        // Start observing the iframe's body element
+        observer.observe(doc.body, observerConfig);
+
+        // Optional: Also observe the iframe's viewport for window resize
+        iframe.contentWindow.addEventListener('resize', () => {
+             iframe.style.height = (doc.body.scrollHeight * 1.1) + 'px';
+        });
+        
+    } catch (e) {
+        console.error("Same-Origin Policy violation or content error:", e);
+    }
+}
+</script>
     </head>
 
     <body hx-ext="theme">

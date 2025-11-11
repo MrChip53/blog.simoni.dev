@@ -1,9 +1,10 @@
 package server
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"log"
 )
 
 var adminRoute = "/admin"
@@ -43,6 +44,8 @@ func NewServer(db *gorm.DB) (*gin.Engine, error) {
 
 	engine.POST("/login", router.HandleLoginRequest)
 	engine.GET("/logout", router.HandleLogoutRequest)
+
+	engine.GET("/wasm/:type", router.HandleWasmLoader)
 
 	// Admin pages
 	engine.GET(adminRoute, router.HandleAdminDashboard)

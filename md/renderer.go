@@ -47,9 +47,12 @@ func renderCode(w io.Writer, codeBlock *ast.CodeBlock, entering bool) {
 }
 
 func renderWasmLoader(w io.Writer, wasm *WasmLoader) {
-	loaderId := uuid.New().String()
+	//loaderId := uuid.New().String()
 
-	io.WriteString(w, fmt.Sprintf("<div id=\"wasm-%s\" data-type=\"%s\" data-wasm-url=\"%s\">", loaderId, wasm.Type, wasm.WasmURL))
+	//io.WriteString(w, fmt.Sprintf("<div id=\"wasm-%s\" data-type=\"%s\" data-wasm-url=\"%s\">", loaderId, wasm.Type, wasm.WasmURL))
+
+	// use Ifram to wasm loader
+	io.WriteString(w, fmt.Sprintf("<iframe src=\"/wasm/%s?url=%s\" onload=\"resizeIframe(this)\" style=\"width: 100%%;\"></iframe>", wasm.Type, wasm.WasmURL))
 }
 
 func renderHook(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {

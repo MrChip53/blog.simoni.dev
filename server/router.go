@@ -611,6 +611,14 @@ func (r *Router) HandleError(ctx *gin.Context, message string, fn func(ctx *gin.
 	}
 }
 
+func (r *Router) HandleWasmLoader(ctx *gin.Context) {
+	wasmType := ctx.Param("type")
+	url := ctx.Query("url")
+	ctx.Status(http.StatusOK)
+	html := pages.WasmPage(wasmType, url)
+	html.Render(createContext(ctx, "Wasm Loader"), ctx.Writer)
+}
+
 func createContext(ctx *gin.Context, pageTitle string) context.Context {
 	username, uOk := ctx.Get("username")
 	theme, ok := ctx.Get("theme")

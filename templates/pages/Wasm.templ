@@ -1,0 +1,15 @@
+package pages
+
+templ WasmPage(wasmType string, url string) {
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <title>Wasm Loader</title>
+        <script src="/js/wasm_exec.js"></script>
+        <script src="/js/wasmLoader.js"></script>
+    </head>
+    <body>
+        <div id="wasm-container" data-wasm-url={url} data-type={wasmType}></div>
+    </body>
+    </html>
+}
