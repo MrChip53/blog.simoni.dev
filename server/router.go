@@ -201,7 +201,7 @@ func (r *Router) HandlePost(ctx *gin.Context) {
 	slug := ctx.Param("slug")
 
 	var post models.BlogPost
-	if err := r.Db.Preload("Tags").Where("day(published_at) = ? AND month(published_at) = ? AND year(published_at) = ? AND slug = ?", day, month, year, slug).First(&post).Error; err != nil {
+	if err := r.Db.Preload("Tags").Where("strftime('%d', published_at) = ? AND strftime('%m', published_at) = ? AND strftime('%Y', published_at) = ? AND slug = ?", day, month, year, slug).First(&post).Error; err != nil {
 		log.Println("Index failed to get posts:", err)
 		r.HandleNotFound(ctx)
 		return

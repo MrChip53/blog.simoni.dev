@@ -1,16 +1,16 @@
 package main
 
 import (
+	"fmt"
+	"log"
+	"runtime"
+
 	"blog.simoni.dev/models"
 	"blog.simoni.dev/server"
-	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"log"
-	"os"
-	"runtime"
 )
 
 func ConfigRuntime() {
@@ -28,7 +28,7 @@ func main() {
 	ConfigRuntime()
 
 	db, err := gorm.Open(
-		mysql.Open(os.Getenv("DSN")),
+		sqlite.Open("blog.db"),
 		&gorm.Config{
 			DisableForeignKeyConstraintWhenMigrating: true,
 		})
