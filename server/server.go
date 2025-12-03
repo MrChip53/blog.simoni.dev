@@ -2,7 +2,11 @@ package server
 
 import (
 	"log"
+	"net/http"
 
+	"blog.simoni.dev/css"
+	"blog.simoni.dev/js"
+	"blog.simoni.dev/resources"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -24,8 +28,9 @@ func NewServer(db *gorm.DB) (*gin.Engine, error) {
 	engine.Use(IsHXRequest())
 	engine.Use(ExtractAuth())
 
-	engine.Static("/css", "css")
-	engine.Static("/js", "js")
+	engine.StaticFS("/css", http.FS(css.Files))
+	engine.StaticFS("/js", http.FS(js.Files))
+	engine.StaticFileFS("/favicon.png", "favicon.png", http.FS(resources.Files))
 
 	engine.NoRoute(router.HandleNotFound)
 

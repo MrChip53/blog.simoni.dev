@@ -4,3 +4,6 @@
 /css/themes
 
 *_templ.go
+
+*.db
+app
