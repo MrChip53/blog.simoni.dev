@@ -1,1 +1,1 @@
-npm i && npm run build && npm run build:themes && go install http://github.com/a-h/templ/cmd/templ@latest && templ generate && go build -tags netgo -ldflags '-s -w' -o app
+npm i && npm run build && npm run build:themes && go install github.com/a-h/templ/cmd/templ@latest && templ generate && go build -tags netgo -ldflags '-s -w' -o app

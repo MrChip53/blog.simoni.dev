@@ -10,11 +10,11 @@ type BlogPost struct {
 	gorm.Model
 	Title       string
 	Author      string
-	Slug        string     `gorm:"type:varchar(100);unique_index"`
-	Content     string     `gorm:"type:text"`
-	Description string     `gorm:"type:varchar(100)"`
-	Tags        []Tag      `gorm:"many2many:blog_post_tags;"`
-	Draft       bool       `gorm:"default:false"`
+	Slug        string `gorm:"type:varchar(100);uniqueIndex"`
+	Content     string
+	Description string
+	Tags        []Tag   `gorm:"many2many:blog_post_tags;"`
+	Draft       bool    `gorm:"default:false"`
 	PublishedAt *time.Time `gorm:"default:null"`
 }
 

@@ -1,16 +1,17 @@
 package main
 
 import (
-	"blog.simoni.dev/models"
-	"blog.simoni.dev/server"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/joho/godotenv"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 	"log"
 	"os"
 	"runtime"
+	"time"
+
+	"blog.simoni.dev/models"
+	"blog.simoni.dev/server"
+	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func ConfigRuntime() {
@@ -20,15 +21,21 @@ func ConfigRuntime() {
 }
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	godotenv.Load()
 
 	ConfigRuntime()
 
+	tz := os.Getenv("APP_TZ")
+	if tz != "" {
+		loc, err := time.LoadLocation(tz)
+		if err != nil {
+			log.Fatal("invalid APP_TZ: ", err)
+		}
+		time.Local = loc
+	}
+
 	db, err := gorm.Open(
-		mysql.Open(os.Getenv("DSN")),
+		postgres.Open(os.Getenv("DSN")),
 		&gorm.Config{
 			DisableForeignKeyConstraintWhenMigrating: true,
 		})

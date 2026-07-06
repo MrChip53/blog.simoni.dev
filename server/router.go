@@ -201,7 +201,10 @@ func (r *Router) HandlePost(ctx *gin.Context) {
 	slug := ctx.Param("slug")
 
 	var post models.BlogPost
-	if err := r.Db.Preload("Tags").Where("day(published_at) = ? AND month(published_at) = ? AND year(published_at) = ? AND slug = ?", day, month, year, slug).First(&post).Error; err != nil {
+	if err := r.Db.Preload("Tags").Where(
+		"EXTRACT(day FROM published_at AT TIME ZONE 'America/Chicago') = ? AND EXTRACT(month FROM published_at AT TIME ZONE 'America/Chicago') = ? AND EXTRACT(year FROM published_at AT TIME ZONE 'America/Chicago') = ? AND slug = ?",
+		day, month, year, slug,
+	).First(&post).Error; err != nil {
 		log.Println("Index failed to get posts:", err)
 		r.HandleNotFound(ctx)
 		return
@@ -267,7 +270,8 @@ func (r *Router) PostPostEdit(ctx *gin.Context) {
 
 	var location = adminRoute
 	if !post.Draft {
-		location = fmt.Sprintf("/post/%d/%d/%d/%s", post.CreatedAt.Month(), post.CreatedAt.Day(), post.CreatedAt.Year(), post.Slug)
+		t := post.CreatedAt.Local()
+		location = fmt.Sprintf("/post/%d/%d/%d/%s", t.Month(), t.Day(), t.Year(), post.Slug)
 	}
 	ctx.Redirect(http.StatusFound, location)
 	//ctx.Header("HX-Location", location)

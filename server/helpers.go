@@ -89,7 +89,8 @@ func parseWasmLoader(p *parser.Parser, data []byte, offset int) (int, ast.Node) 
 }
 
 func getSlug(post models.BlogPost) string {
-	return fmt.Sprintf("/post/%02d/%02d/%d/%s", post.CreatedAt.Month(), post.CreatedAt.Day(), post.CreatedAt.Year(), post.Slug)
+	t := post.CreatedAt.Local()
+	return fmt.Sprintf("/post/%02d/%02d/%d/%s", t.Month(), t.Day(), t.Year(), post.Slug)
 }
 
 func truncateString(s string, max int) string {
