@@ -4,13 +4,13 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var adminRoute = "/admin"
 
-func NewServer(db *gorm.DB) (*gin.Engine, error) {
-	router := NewRouter(db)
+func NewServer(pool *pgxpool.Pool) (*gin.Engine, error) {
+	router := NewRouter(pool)
 
 	gin.SetMode(gin.ReleaseMode)
 	gin.DefaultWriter = log.Writer()
