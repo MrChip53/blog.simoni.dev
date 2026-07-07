@@ -38,7 +38,7 @@ func GetUserLink(username string) templ.SafeURL {
 	return templ.SafeURL("/user/" + username)
 }
 
-func GetDeletePostLink(adminRoute string, postId uint) string {
+func GetDeletePostLink(adminRoute string, postId int64) string {
 	return fmt.Sprintf("%s/post/%d", adminRoute, postId)
 }
 

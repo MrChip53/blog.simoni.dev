@@ -2,54 +2,21 @@ package models
 
 import (
 	"fmt"
-	"gorm.io/gorm"
 	"time"
 )
 
 type BlogPost struct {
-	gorm.Model
+	ID          int64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 	Title       string
 	Author      string
-	Slug        string `gorm:"type:varchar(100);uniqueIndex"`
+	Slug        string
 	Content     string
 	Description string
-	Tags        []Tag   `gorm:"many2many:blog_post_tags;"`
-	Draft       bool    `gorm:"default:false"`
-	PublishedAt *time.Time `gorm:"default:null"`
-}
-
-func NewBlogPost(db *gorm.DB, title, author, slug, content, description string, draft bool) (newPost *BlogPost, err error) {
-	newPost = &BlogPost{
-		Title:       title,
-		Slug:        slug,
-		Content:     content,
-		Author:      author,
-		Description: description,
-		Draft:       draft,
-	}
-
-	if !newPost.Draft {
-		newPost.Publish()
-	}
-
-	if err := db.Create(newPost).Error; err != nil {
-		return nil, err
-	}
-
-	return newPost, nil
-}
-
-func (p *BlogPost) AddTag(tag *Tag) {
-	p.Tags = append(p.Tags, *tag)
-}
-
-func (p *BlogPost) UpdateTags(tx *gorm.DB) error {
-	err := tx.Model(p).Association("Tags").Replace(p.Tags)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	Tags        []Tag
+	Draft       bool
+	PublishedAt *time.Time
 }
 
 func (p *BlogPost) GetEditLink(adminRoute string) string {

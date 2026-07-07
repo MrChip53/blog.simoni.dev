@@ -13,21 +13,25 @@ import (
 	"time"
 
 	"blog.simoni.dev/auth"
-	"blog.simoni.dev/models"
+	db "blog.simoni.dev/db/generated"
 	"blog.simoni.dev/templates/admin"
 	"blog.simoni.dev/templates/components"
 	"blog.simoni.dev/templates/pages"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Router struct {
-	Db *gorm.DB
+	Queries *db.Queries
+	Pool    *pgxpool.Pool
 }
 
-func NewRouter(db *gorm.DB) *Router {
-	return &Router{Db: db}
+func NewRouter(pool *pgxpool.Pool) *Router {
+	queries := db.New(pool)
+	return &Router{Pool: pool, Queries: queries}
 }
 
 func (r *Router) HandlePasswordChange(ctx *gin.Context) {
@@ -39,22 +43,24 @@ func (r *Router) HandlePasswordChange(ctx *gin.Context) {
 		return
 	}
 
-	var uId interface{}
-	var ok bool
-	if uId, ok = ctx.Get("userId"); !ok {
+	uId, ok := ctx.Get("userId")
+	if !ok {
 		r.HandleError(ctx, "You must be logged in to change your password", nil, nil)
 		return
 	}
-	var userId uint
-	if userId, ok = uId.(uint); !ok {
+	userId, ok := uId.(uint)
+	if !ok {
 		r.HandleError(ctx, "You must be logged in to change your password", nil, nil)
 		return
 	}
-	var user models.User
-	if err := r.Db.Where("id = ?", userId).First(&user).Error; err != nil {
+
+	row, err := r.Queries.GetUserByID(ctx.Request.Context(), int64(userId))
+	if err != nil {
 		r.HandleError(ctx, "Failed to find user", nil, err)
 		return
 	}
+	user := mapUser(row)
+
 	if match, err := user.VerifyPassword(oldPassword); err != nil || !match {
 		r.HandleError(ctx, "Failed to change password", nil, err)
 		return
@@ -66,7 +72,10 @@ func (r *Router) HandlePasswordChange(ctx *gin.Context) {
 		return
 	}
 
-	if err := r.Db.Model(&models.User{}).Where("id = ?", userId).Update("password", hash).Error; err != nil {
+	if err := r.Queries.UpdateUserPassword(ctx.Request.Context(), db.UpdateUserPasswordParams{
+		ID:       int64(userId),
+		Password: hash,
+	}); err != nil {
 		r.HandleError(ctx, "Failed to change password", nil, err)
 		return
 	}
@@ -81,29 +90,33 @@ func (r *Router) HandleUsernameChange(ctx *gin.Context) {
 		r.HandleError(ctx, "Username cannot be empty", nil, nil)
 		return
 	}
-	var uId interface{}
-	var ok bool
-	if uId, ok = ctx.Get("userId"); !ok {
+	uId, ok := ctx.Get("userId")
+	if !ok {
 		r.HandleError(ctx, "You must be logged in to change your username", nil, nil)
 		return
 	}
-	var userId uint
-	if userId, ok = uId.(uint); !ok {
+	userId, ok := uId.(uint)
+	if !ok {
 		r.HandleError(ctx, "You must be logged in to change your username", nil, nil)
 		return
 	}
-	err := r.Db.Model(&models.User{}).Where("id = ?", userId).Update("username", newUsername).Error
-	if err != nil {
+
+	if err := r.Queries.UpdateUserUsername(ctx.Request.Context(), db.UpdateUserUsernameParams{
+		ID:       int64(userId),
+		Username: newUsername,
+	}); err != nil {
 		r.HandleError(ctx, "Failed to update username", nil, err)
 		return
 	}
-	var user models.User
-	if err = r.Db.Where("id = ?", userId).First(&user).Error; err != nil {
+
+	row, err := r.Queries.GetUserByID(ctx.Request.Context(), int64(userId))
+	if err != nil {
 		r.HandleError(ctx, "Failed to load new username.", nil, err)
 		return
 	}
-	_, err = user.NewAuthTokens(ctx)
-	if err != nil {
+	user := mapUser(row)
+
+	if _, err = user.NewAuthTokens(ctx); err != nil {
 		r.HandleError(ctx, "Failed to generate tokens", nil, err)
 		return
 	}
@@ -113,17 +126,21 @@ func (r *Router) HandleUsernameChange(ctx *gin.Context) {
 }
 
 func (r *Router) HandleIndex(ctx *gin.Context) {
-	var title = "mrchip53's blog"
-	var posts []models.BlogPost
-	if err := r.Db.Preload("Tags").Where("draft = false").Order("created_at DESC").Limit(10).Find(&posts).Error; err != nil {
+	rows, err := r.Queries.GetPublishedPosts(ctx.Request.Context())
+	if err != nil {
 		log.Println("Index failed to get posts:", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	posts, err := r.loadPostsWithTags(ctx.Request.Context(), rows)
+	if err != nil {
+		log.Println("Index failed to load tags:", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
 	ctx.Status(http.StatusOK)
-	indexHtml := pages.IndexPage(posts, false)
-	indexHtml.Render(createContext(ctx, title), ctx.Writer)
+	pages.IndexPage(posts, false).Render(createContext(ctx, "mrchip53's blog"), ctx.Writer)
 }
 
 func (r *Router) HandleSettings(ctx *gin.Context) {
@@ -138,16 +155,21 @@ func (r *Router) HandleSettings(ctx *gin.Context) {
 
 func (r *Router) HandleUser(ctx *gin.Context) {
 	username := ctx.Param("username")
-	var posts []models.BlogPost
-	if err := r.Db.Preload("Tags").Where("author = ? AND draft = false", username).Order("created_at DESC").Find(&posts).Error; err != nil {
-		log.Println("Index failed to get posts:", err)
+	rows, err := r.Queries.GetPostsByAuthor(ctx.Request.Context(), username)
+	if err != nil {
+		log.Println("User page failed to get posts:", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	posts, err := r.loadPostsWithTags(ctx.Request.Context(), rows)
+	if err != nil {
+		log.Println("User page failed to load tags:", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
 	ctx.Status(http.StatusOK)
-	indexHtml := pages.IndexPage(posts, false)
-	indexHtml.Render(createContext(ctx, username+"'s Page"), ctx.Writer)
+	pages.IndexPage(posts, false).Render(createContext(ctx, username+"'s Page"), ctx.Writer)
 }
 
 func (r *Router) HandleComment(ctx *gin.Context) {
@@ -156,7 +178,7 @@ func (r *Router) HandleComment(ctx *gin.Context) {
 		return
 	}
 
-	postId := ctx.Param("postId")
+	postIdStr := ctx.Param("postId")
 	author := ctx.PostForm("Username")
 	comment := ctx.PostForm("comment")
 
@@ -165,33 +187,36 @@ func (r *Router) HandleComment(ctx *gin.Context) {
 		return
 	}
 
-	err := r.Db.Transaction(func(tx *gorm.DB) error {
-		var blogPost models.BlogPost
-		if err := tx.First(&blogPost, postId).Error; err != nil {
-			return err
-		}
-
-		err := tx.Create(&models.Comment{
-			BlogPostId: blogPost.ID,
-			Author:     author,
-			Comment:    comment,
-		}).Error
-		return err
-	})
+	pid, err := strconv.ParseInt(postIdStr, 10, 64)
 	if err != nil {
+		r.HandleError(ctx, "Invalid post ID", nil, err)
+		return
+	}
+
+	if _, err := r.Queries.GetPostByID(ctx.Request.Context(), pid); err != nil {
+		r.HandleError(ctx, "Post not found", nil, err)
+		return
+	}
+
+	if _, err := r.Queries.CreateComment(ctx.Request.Context(), db.CreateCommentParams{
+		BlogPostID: pid,
+		Author:     author,
+		Comment:    comment,
+	}); err != nil {
 		r.HandleError(ctx, "Failed to create comment", nil, err)
 		return
 	}
 
-	var comments []models.Comment
-	r.Db.Where("blog_post_id = ?", postId).Order("created_at DESC").Find(&comments)
+	dbComments, err := r.Queries.GetCommentsByPostID(ctx.Request.Context(), pid)
+	if err != nil {
+		r.HandleError(ctx, "Failed to load comments", nil, err)
+		return
+	}
 
-	ctx.Header("HX-Retarget", "#comments-"+postId)
+	ctx.Header("HX-Retarget", "#comments-"+postIdStr)
 	ctx.Header("HX-Reswap", "innerHTML")
-
 	ctx.Status(http.StatusOK)
-	html := components.CommentsComponent(comments)
-	html.Render(context.TODO(), ctx.Writer)
+	components.CommentsComponent(mapComments(dbComments)).Render(context.TODO(), ctx.Writer)
 }
 
 func (r *Router) HandlePost(ctx *gin.Context) {
@@ -200,45 +225,64 @@ func (r *Router) HandlePost(ctx *gin.Context) {
 	year := ctx.Param("year")
 	slug := ctx.Param("slug")
 
-	var post models.BlogPost
-	if err := r.Db.Preload("Tags").Where(
-		"EXTRACT(day FROM published_at AT TIME ZONE 'America/Chicago') = ? AND EXTRACT(month FROM published_at AT TIME ZONE 'America/Chicago') = ? AND EXTRACT(year FROM published_at AT TIME ZONE 'America/Chicago') = ? AND slug = ?",
-		day, month, year, slug,
-	).First(&post).Error; err != nil {
-		log.Println("Index failed to get posts:", err)
-		r.HandleNotFound(ctx)
+	m, _ := strconv.Atoi(month)
+	d, _ := strconv.Atoi(day)
+	y, _ := strconv.Atoi(year)
+	// Use calendar-based next-day midnight so DST days (25h or 23h) are handled correctly.
+	startOfDay := time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.Local)
+	endOfDay := time.Date(y, time.Month(m), d+1, 0, 0, 0, 0, time.Local)
+
+	row, err := r.Queries.GetPostBySlugAndDate(ctx.Request.Context(), db.GetPostBySlugAndDateParams{
+		Slug:       slug,
+		StartOfDay: pgtype.Timestamptz{Time: startOfDay, Valid: true},
+		EndOfDay:   pgtype.Timestamptz{Time: endOfDay, Valid: true},
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			r.HandleNotFound(ctx)
+		} else {
+			log.Println("Post page failed:", err)
+			ctx.AbortWithStatus(http.StatusInternalServerError)
+		}
 		return
 	}
 
-	var comments []models.Comment
-	r.Db.Where("blog_post_id = ?", post.ID).Order("created_at DESC").Find(&comments)
+	dbTags, _ := r.Queries.GetTagsForPost(ctx.Request.Context(), row.ID)
+	post := mapPost(row, mapTags(dbTags))
 
-	postHtml := parseMarkdown([]byte(post.Content))
+	dbComments, _ := r.Queries.GetCommentsByPostID(ctx.Request.Context(), row.ID)
 
 	ctx.Status(200)
-	indexHtml := pages.PostPage(post, string(postHtml), comments)
-	indexHtml.Render(createContext(ctx, post.Title), ctx.Writer)
+	pages.PostPage(post, string(parseMarkdown([]byte(post.Content))), mapComments(dbComments)).Render(createContext(ctx, post.Title), ctx.Writer)
 }
 
 func (r *Router) HandlePostEdit(ctx *gin.Context) {
-	postId := ctx.Param("postId")
-
-	var post models.BlogPost
-	if err := r.Db.Preload("Tags").Where("id = ?", postId).First(&post).Error; err != nil {
-		log.Println("Index failed to get posts:", err)
+	postId, err := strconv.ParseInt(ctx.Param("postId"), 10, 64)
+	if err != nil {
 		r.HandleNotFound(ctx)
 		return
 	}
 
-	postHtml := parseMarkdown([]byte(post.Content))
+	row, err := r.Queries.GetPostByID(ctx.Request.Context(), postId)
+	if err != nil {
+		log.Println("PostEdit failed to get post:", err)
+		r.HandleNotFound(ctx)
+		return
+	}
+
+	dbTags, _ := r.Queries.GetTagsForPost(ctx.Request.Context(), postId)
+	post := mapPost(row, mapTags(dbTags))
 
 	ctx.Status(http.StatusOK)
-	html := admin.EditPostPage(post, string(postHtml))
-	html.Render(createContext(ctx, "Editing "+post.Title), ctx.Writer)
+	admin.EditPostPage(post, string(parseMarkdown([]byte(post.Content)))).Render(createContext(ctx, "Editing "+post.Title), ctx.Writer)
 }
 
 func (r *Router) PostPostEdit(ctx *gin.Context) {
-	postId := ctx.Param("postId")
+	postId, err := strconv.ParseInt(ctx.Param("postId"), 10, 64)
+	if err != nil {
+		r.HandleError(ctx, "Invalid post ID", nil, err)
+		return
+	}
 
 	content := ctx.PostForm("content")
 	publish := ctx.PostForm("publish")
@@ -248,33 +292,42 @@ func (r *Router) PostPostEdit(ctx *gin.Context) {
 		return
 	}
 
-	var post models.BlogPost
-	if err := r.Db.Where("id = ?", postId).First(&post).Error; err != nil {
-		r.HandleError(ctx, "Failed to load new content.", nil, err)
+	row, err := r.Queries.GetPostByID(ctx.Request.Context(), postId)
+	if err != nil {
+		r.HandleError(ctx, "Failed to load post.", nil, err)
 		return
 	}
 
-	post.Content = strings.TrimSpace(content)
-	var wasPublished = !post.Draft
-	post.Draft = publish != "on"
-	if !wasPublished {
-		post.Publish()
-		post.Slug = url.QueryEscape(strings.ToLower(strings.ReplaceAll(post.Title, " ", "-")))
+	draft := publish != "on"
+	publishedAt := row.PublishedAt
+	slug := row.Slug
+	if row.Draft && !draft {
+		// First time publishing
+		publishedAt = pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}
+		slug = url.QueryEscape(strings.ToLower(strings.ReplaceAll(row.Title, " ", "-")))
 	}
 
-	err := r.Db.Save(&post).Error
+	updated, err := r.Queries.UpdatePost(ctx.Request.Context(), db.UpdatePostParams{
+		ID:          postId,
+		Title:       row.Title,
+		Content:     strings.TrimSpace(content),
+		Slug:        slug,
+		Draft:       draft,
+		PublishedAt: publishedAt,
+	})
 	if err != nil {
 		r.HandleError(ctx, "Failed to update post.", nil, err)
 		return
 	}
 
-	var location = adminRoute
-	if !post.Draft {
-		t := post.CreatedAt.Local()
-		location = fmt.Sprintf("/post/%d/%d/%d/%s", t.Month(), t.Day(), t.Year(), post.Slug)
+	location := adminRoute
+	if !updated.Draft {
+		if t := pgTimeToTime(updated.PublishedAt); !t.IsZero() {
+			tl := t.Local()
+			location = fmt.Sprintf("/post/%02d/%02d/%d/%s", tl.Month(), tl.Day(), tl.Year(), updated.Slug)
+		}
 	}
 	ctx.Redirect(http.StatusFound, location)
-	//ctx.Header("HX-Location", location)
 }
 
 func (r *Router) HandleLogin(ctx *gin.Context) {
@@ -293,25 +346,20 @@ func (r *Router) HandleLogin(ctx *gin.Context) {
 func (r *Router) HandleTag(ctx *gin.Context) {
 	tag := ctx.Param("tag")
 
-	var postIds []uint
-	if err := r.Db.Raw(
-		"SELECT blog_post_id FROM blog_post_tags WHERE tag_id = (SELECT id FROM tags WHERE name = ?)",
-		tag,
-	).Scan(&postIds).Error; err != nil {
-		log.Println("Tag failed to get post ids:", err)
-		ctx.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	var posts []models.BlogPost
-	if err := r.Db.Preload("Tags").Where("id IN ? AND draft = false", postIds).Order("created_at DESC").Find(&posts).Error; err != nil {
+	rows, err := r.Queries.GetPublishedPostsByTag(ctx.Request.Context(), tag)
+	if err != nil {
 		log.Println("Tag failed to get posts:", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
+	posts, err := r.loadPostsWithTags(ctx.Request.Context(), rows)
+	if err != nil {
+		log.Println("Tag failed to load tags:", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 
-	indexHtml := pages.IndexPage(posts, false)
-	indexHtml.Render(createContext(ctx, "Posts tagged with "+tag), ctx.Writer)
+	pages.IndexPage(posts, false).Render(createContext(ctx, "Posts tagged with "+tag), ctx.Writer)
 }
 
 func (r *Router) HandleNotFound(ctx *gin.Context) {
@@ -342,51 +390,39 @@ func (r *Router) HandleLoginRequest(ctx *gin.Context) {
 	password := ctx.PostForm("password")
 	redirectPath := ctx.PostForm("redirect")
 
-	var errString string
+	errString := "Invalid username or password"
 
-	var user models.User
-	if err := r.Db.Where("username = ?", username).First(&user).Error; err != nil {
+	row, err := r.Queries.GetUserByUsername(ctx.Request.Context(), username)
+	if err != nil {
 		time.Sleep(time.Duration(170+rand.Intn(35)) * time.Millisecond)
 		log.Println("Login failed to get user:", err)
-		errString = "Invalid username or password"
 		r.HandleError(ctx, errString, func(ctx *gin.Context) {
-			html := pages.LoginPage(redirectPath, errString)
-			html.Render(createContext(ctx, "Login"), ctx.Writer)
+			pages.LoginPage(redirectPath, errString).Render(createContext(ctx, "Login"), ctx.Writer)
+		}, err)
+		return
+	}
+	user := mapUser(row)
+
+	match, err := user.VerifyPassword(password)
+	if err != nil || !match {
+		if err != nil {
+			log.Println("Login failed to verify password:", err)
+		}
+		r.HandleError(ctx, errString, func(ctx *gin.Context) {
+			pages.LoginPage(redirectPath, errString).Render(createContext(ctx, "Login"), ctx.Writer)
 		}, err)
 		return
 	}
 
-	if match, err := user.VerifyPassword(password); err != nil {
-		log.Println("Login failed to verify password:", err)
-		errString = "Invalid username or password"
-		r.HandleError(ctx, errString, func(ctx *gin.Context) {
-			html := pages.LoginPage(redirectPath, errString)
-			html.Render(createContext(ctx, "Login"), ctx.Writer)
-		}, err)
-		return
-	} else if !match {
-		errString = "Invalid username or password"
-		r.HandleError(ctx, errString, func(ctx *gin.Context) {
-			html := pages.LoginPage(redirectPath, errString)
-			html.Render(createContext(ctx, "Login"), ctx.Writer)
-		}, err)
-		return
-	}
-
-	_, err := user.NewAuthTokens(ctx)
-	if err != nil {
+	if _, err := user.NewAuthTokens(ctx); err != nil {
 		log.Println("Login failed to generate tokens:", err)
-		errString = "Invalid username or password"
 		r.HandleError(ctx, errString, func(ctx *gin.Context) {
-			html := pages.LoginPage(redirectPath, errString)
-			html.Render(createContext(ctx, "Login"), ctx.Writer)
+			pages.LoginPage(redirectPath, errString).Render(createContext(ctx, "Login"), ctx.Writer)
 		}, err)
 		return
 	}
-	//AddJwtPayloadToCtx(ctx, payload)
+
 	ctx.Redirect(http.StatusFound, redirectPath)
-	//html := components.Navbar(true)
-	//html.Render(createContext(ctx, ""), ctx.Writer)
 }
 
 func (r *Router) HandleAdminDashboard(ctx *gin.Context) {
@@ -397,47 +433,60 @@ func (r *Router) HandleAdminDashboard(ctx *gin.Context) {
 		return
 	}
 
-	var posts []models.BlogPost
-	if err := r.Db.Preload("Tags").Where("draft = true").Order("created_at DESC").Limit(10).Find(&posts).Error; err != nil {
-		log.Println("Index failed to get posts:", err)
+	rows, err := r.Queries.GetDraftPosts(ctx.Request.Context())
+	if err != nil {
+		log.Println("Dashboard failed to get posts:", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	posts, err := r.loadPostsWithTags(ctx.Request.Context(), rows)
+	if err != nil {
+		log.Println("Dashboard failed to load tags:", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	html := admin.DashboardPage(posts, strconv.Itoa(len(posts)), "0")
-	html.Render(createContext(ctx, "Admin Dashboard"), ctx.Writer)
+	admin.DashboardPage(posts, strconv.Itoa(len(posts)), "0").Render(createContext(ctx, "Admin Dashboard"), ctx.Writer)
 }
 
 func (r *Router) HandleAdminAddTagToPost(ctx *gin.Context) {
-	postId := ctx.Param("id")
+	postId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		r.HandleError(ctx, "Invalid post ID", nil, err)
+		return
+	}
 	tag := ctx.PostForm("tag")
 
-	err := r.Db.Transaction(func(tx *gorm.DB) error {
-		var blogPost models.BlogPost
-		if err := tx.First(&blogPost, postId).Error; err != nil {
-			return err
-		}
-
-		var tagModel models.Tag
-		if err := tx.Where("name = ?", tag).First(&tagModel).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				tagM, err := models.NewTag(tx, tag)
-				if err != nil {
-					return err
-				}
-				tagModel = *tagM
-			} else {
-				return err
-			}
-		}
-
-		if err := tx.Model(&blogPost).Association("Tags").Append(&tagModel); err != nil {
-			return err
-		}
-
-		return nil
-	})
+	tx, err := r.Pool.Begin(ctx.Request.Context())
 	if err != nil {
+		r.HandleError(ctx, "Failed to add tag", nil, err)
+		return
+	}
+	defer tx.Rollback(ctx.Request.Context())
+	qtx := r.Queries.WithTx(tx)
+
+	tagRow, err := qtx.GetTagByName(ctx.Request.Context(), tag)
+	if err != nil {
+		if !errors.Is(err, pgx.ErrNoRows) {
+			r.HandleError(ctx, "Failed to add tag", nil, err)
+			return
+		}
+		tagRow, err = qtx.CreateTag(ctx.Request.Context(), tag)
+		if err != nil {
+			r.HandleError(ctx, "Failed to create tag", nil, err)
+			return
+		}
+	}
+
+	if err := qtx.AddTagToPost(ctx.Request.Context(), db.AddTagToPostParams{
+		BlogPostID: postId,
+		TagID:      tagRow.ID,
+	}); err != nil {
+		r.HandleError(ctx, "Failed to add tag", nil, err)
+		return
+	}
+
+	if err := tx.Commit(ctx.Request.Context()); err != nil {
 		r.HandleError(ctx, "Failed to add tag", nil, err)
 		return
 	}
@@ -446,27 +495,21 @@ func (r *Router) HandleAdminAddTagToPost(ctx *gin.Context) {
 }
 
 func (r *Router) HandleAdminDeleteTagFromPost(ctx *gin.Context) {
-	postId := ctx.Param("id")
-	tagId := ctx.Param("tagId")
-
-	err := r.Db.Transaction(func(tx *gorm.DB) error {
-		var blogPost models.BlogPost
-		if err := tx.First(&blogPost, postId).Error; err != nil {
-			return err
-		}
-
-		var tag models.Tag
-		if err := tx.First(&tag, tagId).Error; err != nil {
-			return err
-		}
-
-		if err := tx.Model(&blogPost).Association("Tags").Delete(&tag); err != nil {
-			return err
-		}
-
-		return nil
-	})
+	postId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
+		r.HandleError(ctx, "Invalid post ID", nil, err)
+		return
+	}
+	tagId, err := strconv.ParseInt(ctx.Param("tagId"), 10, 64)
+	if err != nil {
+		r.HandleError(ctx, "Invalid tag ID", nil, err)
+		return
+	}
+
+	if err := r.Queries.RemoveTagFromPost(ctx.Request.Context(), db.RemoveTagFromPostParams{
+		BlogPostID: postId,
+		TagID:      tagId,
+	}); err != nil {
 		r.HandleError(ctx, "Failed to delete tag", nil, err)
 		return
 	}
@@ -517,43 +560,60 @@ func (r *Router) HandleAdminNewBlogPostRequest(ctx *gin.Context) {
 	}
 	author := jwt.(*auth.JwtPayload).Username
 
-	tx := r.Db.Begin()
-	newPost, err := models.NewBlogPost(tx, title, author, slug, strings.TrimSpace(content), description, draft)
+	var publishedAt pgtype.Timestamptz
+	if !draft {
+		publishedAt = pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}
+	}
+
+	tx, err := r.Pool.Begin(ctx.Request.Context())
 	if err != nil {
-		tx.Rollback()
+		r.HandleError(ctx, "Failed to create blog post", nil, err)
+		return
+	}
+	defer tx.Rollback(ctx.Request.Context())
+	qtx := r.Queries.WithTx(tx)
+
+	post, err := qtx.CreatePost(ctx.Request.Context(), db.CreatePostParams{
+		Title:       title,
+		Author:      author,
+		Slug:        slug,
+		Content:     strings.TrimSpace(content),
+		Description: description,
+		Draft:       draft,
+		PublishedAt: publishedAt,
+	})
+	if err != nil {
 		r.HandleError(ctx, "Failed to create blog post", nil, err)
 		return
 	}
 
-	for _, tag := range tags {
-		tagModel, err := models.GetTag(tx, tag)
+	for _, tagName := range tags {
+		tagName = strings.TrimSpace(tagName)
+		if tagName == "" {
+			continue
+		}
+		tagRow, err := qtx.GetTagByName(ctx.Request.Context(), tagName)
 		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				tagModel, err = models.NewTag(tx, tag)
-				if err != nil {
-					tx.Rollback()
-					r.HandleError(ctx, "Failed to create blog post", nil, err)
-					return
-				}
-			} else {
-				tx.Rollback()
+			if !errors.Is(err, pgx.ErrNoRows) {
+				r.HandleError(ctx, "Failed to create blog post", nil, err)
+				return
+			}
+			tagRow, err = qtx.CreateTag(ctx.Request.Context(), tagName)
+			if err != nil {
 				r.HandleError(ctx, "Failed to create blog post", nil, err)
 				return
 			}
 		}
-		// TODO why is this needed?
-		time.Sleep(10 * time.Millisecond)
-		newPost.AddTag(tagModel)
+		if err := qtx.AddTagToPost(ctx.Request.Context(), db.AddTagToPostParams{
+			BlogPostID: post.ID,
+			TagID:      tagRow.ID,
+		}); err != nil {
+			r.HandleError(ctx, "Failed to create blog post", nil, err)
+			return
+		}
 	}
 
-	err = newPost.UpdateTags(tx)
-	if err != nil {
-		tx.Rollback()
-		r.HandleError(ctx, "Failed to create blog post", nil, err)
-		return
-	}
-
-	if err = tx.Commit().Error; err != nil {
+	if err := tx.Commit(ctx.Request.Context()); err != nil {
 		r.HandleError(ctx, "Failed to create blog post", nil, err)
 		return
 	}
@@ -562,37 +622,34 @@ func (r *Router) HandleAdminNewBlogPostRequest(ctx *gin.Context) {
 }
 
 func (r *Router) HandleAdminPostsDelete(ctx *gin.Context) {
-	err := r.Db.Transaction(func(tx *gorm.DB) error {
-		var blogPost models.BlogPost
-		if err := tx.First(&blogPost, ctx.Param("id")).Error; err != nil {
-			return err
-		}
-
-		if err := tx.Delete(&blogPost).Error; err != nil {
-			return err
-		}
-
-		return nil
-	})
+	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
+		r.HandleError(ctx, "Invalid post ID", nil, err)
+		return
+	}
+	if err := r.Queries.SoftDeletePost(ctx.Request.Context(), id); err != nil {
 		r.HandleError(ctx, "Failed to delete post", nil, err)
 		return
 	}
-
 	r.HandleAdminPosts(ctx)
 }
 
 func (r *Router) HandleAdminPosts(ctx *gin.Context) {
-	var posts []models.BlogPost
-	if err := r.Db.Preload("Tags").Order("created_at DESC").Limit(10).Find(&posts).Error; err != nil {
-		log.Println("Index failed to get posts:", err)
+	rows, err := r.Queries.GetAllPostsAdmin(ctx.Request.Context())
+	if err != nil {
+		log.Println("Admin posts failed:", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	posts, err := r.loadPostsWithTags(ctx.Request.Context(), rows)
+	if err != nil {
+		log.Println("Admin posts failed to load tags:", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
 	ctx.Status(200)
-	indexHtml := pages.IndexPage(posts, true)
-	indexHtml.Render(createContext(ctx, "Manage Posts"), ctx.Writer)
+	pages.IndexPage(posts, true).Render(createContext(ctx, "Manage Posts"), ctx.Writer)
 }
 
 func (r *Router) HandleError(ctx *gin.Context, message string, fn func(ctx *gin.Context), err error) {

@@ -1,17 +1,18 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"runtime"
 	"time"
 
-	"blog.simoni.dev/models"
 	"blog.simoni.dev/server"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/pressly/goose/v3"
 )
 
 func ConfigRuntime() {
@@ -34,22 +35,19 @@ func main() {
 		time.Local = loc
 	}
 
-	db, err := gorm.Open(
-		postgres.Open(os.Getenv("DSN")),
-		&gorm.Config{
-			DisableForeignKeyConstraintWhenMigrating: true,
-		})
-
+	pool, err := pgxpool.New(context.Background(), os.Getenv("DSN"))
 	if err != nil {
-		log.Fatal("failed to open db connection ", err)
+		log.Fatal("failed to open db connection: ", err)
+	}
+	defer pool.Close()
+
+	sqlDB := stdlib.OpenDBFromPool(pool)
+	goose.SetBaseFS(nil) // or embed
+	if err := goose.Up(sqlDB, "db/migrations"); err != nil {
+		log.Fatal("migration failed: ", err)
 	}
 
-	err = db.AutoMigrate(&models.BlogPost{}, &models.Tag{}, &models.User{}, &models.Comment{})
-	if err != nil {
-		log.Fatal("failed to migrate db: ", err)
-	}
-
-	engine, err := server.NewServer(db)
+	engine, err := server.NewServer(pool)
 	if err != nil {
 		log.Fatal("failed to create server: ", err)
 	}

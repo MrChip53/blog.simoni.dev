@@ -2,14 +2,15 @@ package models
 
 import (
 	"fmt"
-	"gorm.io/gorm"
+	"time"
 )
 
 type Comment struct {
-	gorm.Model
-	BlogPostId uint
+	ID         int64
+	CreatedAt  time.Time
+	BlogPostId int64
 	Author     string
-	Comment    string `gorm:"type:varchar(1000)"`
+	Comment    string
 }
 
 func (c *Comment) GetHtmlId() string {

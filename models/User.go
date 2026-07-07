@@ -1,17 +1,19 @@
 package models
 
 import (
+	"time"
+
 	"blog.simoni.dev/auth"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type User struct {
-	gorm.Model
-	Username string `gorm:"type:varchar(100);uniqueIndex"`
-	Password string `gorm:"type:varchar(302)"`
-	Admin    bool
-	Theme    string `gorm:"type:varchar(100);default:dark"`
+	ID        int64
+	CreatedAt time.Time
+	Username  string
+	Password  string
+	Admin     bool
+	Theme     string
 }
 
 func (u *User) IsAdmin() bool {
@@ -26,7 +28,7 @@ func (u *User) NewAuthTokens(ctx *gin.Context) (*auth.JwtPayload, error) {
 	payload := &auth.JwtPayload{
 		Username: u.Username,
 		Admin:    u.Admin,
-		UserId:   u.ID,
+		UserId:   uint(u.ID),
 		Theme:    u.Theme,
 	}
 
