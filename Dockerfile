@@ -9,7 +9,7 @@ COPY css/ ./css/
 RUN npm run build && npm run build:themes
 
 # Stage 2: Build Go binary
-FROM golang:1.25-alpine AS go-builder
+FROM golang:1.26-alpine AS go-builder
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
