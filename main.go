@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"log"
 	"os"
@@ -13,6 +14,11 @@ import (
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
 	"github.com/pressly/goose/v3"
+)
+
+var (
+	//go:embed db/migrations
+	migrationsFs embed.FS
 )
 
 func ConfigRuntime() {
@@ -42,7 +48,8 @@ func main() {
 	defer pool.Close()
 
 	sqlDB := stdlib.OpenDBFromPool(pool)
-	goose.SetBaseFS(nil) // or embed
+	goose.SetBaseFS(migrationsFs)
+	goose.SetDialect("postgres")
 	if err := goose.Up(sqlDB, "db/migrations"); err != nil {
 		log.Fatal("migration failed: ", err)
 	}
